@@ -10,26 +10,29 @@ class Age(@volatile var tag: Int, @volatile var top: Int) {
 }
 
 class WorkStealingQueue[T] {
-  var age = new AtomicReference[Age](new Age(0, 0))
-  @volatile var bottom: Int = 0
-  val queue = new AtomicReferenceArray[T](512)
+  private val age = new AtomicReference[Age](new Age(0, 0))
+  private var bottom: Int = 0
+  private val queue = new AtomicReferenceArray[T](512)
 
   def push(v: T): Unit = {
-    @volatile var localBot = bottom
+    val localBot = bottom
     queue.set(localBot, v)
-    localBot = localBot + 1
-    bottom = localBot
+    bottom = localBot + 1
   }
 
   def take(): Option[T] = {
-    var localBot = bottom
+    val oldBottom = bottom
 
-    if (localBot == 0) None else {
-      localBot = localBot - 1
+    if (oldBottom == 0) {
+      None
+    }
+    else {
+      val localBot = oldBottom - 1
       bottom = localBot
 
       val v = queue.get(localBot)
       val oldAge = age.get
+      
       if (localBot > oldAge.top) {
         Some(v)
       }
@@ -72,4 +75,6 @@ class WorkStealingQueue[T] {
       }
     }
   }
+
+  def length = bottom - age.get.top
 }

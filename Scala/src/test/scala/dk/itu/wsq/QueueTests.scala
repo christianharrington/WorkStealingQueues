@@ -1,9 +1,33 @@
 package dk.itu.wsq.test
 
+import dk.itu.wsq._
+import java.util.Random
 import org.scalatest._
 
+object Test extends App {
+  import dk.itu.wsq.cases.QuickSort
+  import scala.collection.mutable.ArrayBuffer
+
+  val l = 100000
+  val r = new Random()
+
+  val arr = new ArrayBuffer[Int](l)
+
+  for (i <- 0 until l) {
+    arr += r.nextInt(1000)
+  }
+
+  val task = new QuickSort(arr)
+  val wp   = new WorkerPool(task)
+  val initial = new WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]](0, None, Seq(arr))
+
+  val result = wp.run(Some(initial))
+  
+  println(s"Result: $result")
+}
+
 class QueueTests extends FlatSpec with Matchers {
-  import dk.itu.wsq.WorkStealingQueue
+  import scala.collection.mutable.ArrayBuffer
 
   "Taking from a WSQ" should "be LIFO" in {
     val queue = new WorkStealingQueue[Int]()
@@ -29,5 +53,50 @@ class QueueTests extends FlatSpec with Matchers {
   "Stealing from an empty WSQ" should "return None" in {
     val queue = new WorkStealingQueue[Int]()
     queue.steal() should be (None)
+  }
+
+  "InsertionSort" should "sort" in {
+    import dk.itu.wsq.cases.QuickSort 
+    val l = 100
+    val r = new Random()
+
+    val arr = new ArrayBuffer[Int](l)
+
+    for (i <- 0 until l) {
+      arr += r.nextInt(1000)
+    }
+
+    val result = QuickSort.insertionSort(arr)
+    for (i <- 0 until (l - 1)) {
+      assert(result(i) <= result(i + 1), s"Failed at index $i: ${result(i)}, ${result(i+1)}")
+    }
+  }
+
+  "Sorting using QuickSort" should "sort" in {
+    import dk.itu.wsq.cases.QuickSort 
+
+    val l = 10000
+    val r = new Random()
+
+    val arr = new ArrayBuffer[Int](l)
+
+    for (i <- 0 until l) {
+      arr += r.nextInt(1000)
+    }
+
+    val task = new QuickSort(arr)
+    val wp   = new WorkerPool(task, 4)
+    val initial = new WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]](0, None, Seq(arr))
+    
+    val result = wp.run(Some(initial))
+
+    result match {
+      case Some(r) => {
+        for (i <- 0 until (l - 1)) {
+          assert(r(i) <= r(i + 1), s"Failed at index $i: ${r(i)}, ${r(i+1)}\n $r")
+        }
+      }
+      case None => assert(false)
+    }
   }
 }
