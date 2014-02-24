@@ -16,4 +16,6 @@ libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 )
 
+testOptions in Test += Tests.Argument("-oD")
+
 org.scalastyle.sbt.ScalastylePlugin.Settings

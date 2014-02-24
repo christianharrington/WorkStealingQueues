@@ -63,9 +63,16 @@ class QuickSort(toSort: ArrayBuffer[Int]) extends Task[ArrayBuffer[Int], ArrayBu
     }
   }
 
+  def flatten(arr: Seq[ArrayBuffer[Int]]): ArrayBuffer[Int] = {
+    arr.length match {
+      case 0 => new ArrayBuffer[Int]()
+      case _ => if (arr.head != null) arr.head ++= flatten(arr.tail) else flatten(arr.tail)
+    }
+  }
+
   def complete(in: WU): ArrayBuffer[Int] = {
     val pivot = in.results.head
     val arrs = in.results.tail
-    arrs.head ++= pivot ++= arrs.tail.flatten
+    arrs.head ++= pivot ++= (if (arrs.tail.head != null) arrs.tail.head else new ArrayBuffer[Int]())
   }
 }

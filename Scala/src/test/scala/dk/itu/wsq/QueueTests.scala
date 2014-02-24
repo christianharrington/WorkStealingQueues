@@ -95,8 +95,29 @@ class QueueTests extends FlatSpec with Matchers {
         for (i <- 0 until (l - 1)) {
           assert(r(i) <= r(i + 1), s"Failed at index $i: ${r(i)}, ${r(i+1)}\n $r")
         }
+        assert(r.length == l)
       }
       case None => assert(false)
     }
+  }
+
+  "Sorting using Scala's quicksort implementation" should "sort" in {
+    import dk.itu.wsq.cases.QuickSort 
+
+    val l = 10000
+    val r = new Random()
+
+    val arr = new ArrayBuffer[Int](l)
+
+    for (i <- 0 until l) {
+      arr += r.nextInt(1000)
+    }
+    
+    val result = arr.sorted
+
+    for (i <- 0 until (l - 1)) {
+      assert(result(i) <= result(i + 1), s"Failed at index $i: ${result(i)}, ${result(i+1)}\n $result")
+    }
+    assert(result.length == l)
   }
 }
