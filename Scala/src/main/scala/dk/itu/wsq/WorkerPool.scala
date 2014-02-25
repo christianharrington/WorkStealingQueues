@@ -6,7 +6,7 @@ class WorkerPool[T, R](val task: Task[T, R], val workerNumber: Int = 1) {
   private val random = new Random()
 
   private val workers = for (i <- 0 until workerNumber) yield {
-    new Worker(this, task)
+    new Worker(i, this, task)
   }
   private val threads = for (i <- 0 until workerNumber) yield {
     new Thread(workers(i))
@@ -21,8 +21,15 @@ class WorkerPool[T, R](val task: Task[T, R], val workerNumber: Int = 1) {
     result
   }
 
-  def steal(): Option[WorkUnit[T, R]] = {
+  def steal(id: Int, next: Int = 1): Option[WorkUnit[T, R]] = {
     val r = random.nextInt(workerNumber)
-    workers(r).steal()
+    if (r == id) steal(id) else workers(r).steal()
+    /*val q = (id + next) % workerNumber
+    val w = if (q == id) (q + 1) % workerNumber else q
+
+    workers(w).steal match {
+      case Some(w) => Some(w)
+      case None    => if (next > workerNumber) None else steal(id, next + 1)
+    }*/
   }
 }

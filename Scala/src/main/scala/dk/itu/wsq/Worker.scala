@@ -1,6 +1,6 @@
 package dk.itu.wsq
 
-class Worker[T, R](val workerPool: WorkerPool[T, R], val task: Task[T, R]) extends Runnable {
+class Worker[T, R](val id: Int, val workerPool: WorkerPool[T, R], val task: Task[T, R]) extends Runnable {
   private val queue = new WorkStealingQueue[WorkUnit[T, R]]()
   private var currentWorkUnit: Option[WorkUnit[T, R]] = None
   
@@ -64,7 +64,7 @@ class Worker[T, R](val workerPool: WorkerPool[T, R], val task: Task[T, R]) exten
           }
         }
         case None => {
-          setNextWorkUnit(workerPool.steal())
+          setNextWorkUnit(workerPool.steal(id))
         } 
       }
     }
