@@ -77,4 +77,6 @@ class WorkStealingQueue[T] {
   }
 
   def length = bottom - age.get.top
+
+  def isEmpty = length == 0
 }

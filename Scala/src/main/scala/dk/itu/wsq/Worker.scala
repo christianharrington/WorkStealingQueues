@@ -1,4 +1,4 @@
-package dk.itu.wsq
+/*package dk.itu.wsq
 
 class Worker[T, R](val id: Int, val workerPool: WorkerPool[T, R], val task: Task[T, R]) extends Runnable {
   private val queue = new WorkStealingQueue[WorkUnit[T, R]]()
@@ -73,4 +73,4 @@ class Worker[T, R](val id: Int, val workerPool: WorkerPool[T, R], val task: Task
   def steal(): Option[WorkUnit[T, R]] = {
     queue.steal()
   }
-}
+}*/

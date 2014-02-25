@@ -1,4 +1,4 @@
-package dk.itu.wsq
+/*package dk.itu.wsq
 
 object Benchmark extends App {
   import dk.itu.wsq._
@@ -36,3 +36,4 @@ object Benchmark extends App {
   time(testArrayBuiltIn.sorted)
   println("Done")*/
 }
+*/

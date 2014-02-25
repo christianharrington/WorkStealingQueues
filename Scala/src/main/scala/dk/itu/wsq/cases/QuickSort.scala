@@ -1,61 +1,112 @@
 package dk.itu.wsq.cases
 
-import dk.itu.wsq.{Task, WorkUnit}
+import dk.itu.wsq.{WorkerPool, WorkStealingQueue}
 import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
-object QuickSort extends Task[ArrayBuffer[Int], ArrayBuffer[Int]] {
-  type WU = WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]]
+sealed abstract class Tree()
+object Root extends Tree
+case class LeftTree(parent: QuickSortNode)  extends Tree
+case class RightTree(parent: QuickSortNode) extends Tree
+
+class QuickSortNode(val list: ArrayBuffer[Int], val role: Tree) {
+  var pivot: Int = _
+  var left: Option[ArrayBuffer[Int]] = None
+  var right: Option[ArrayBuffer[Int]] = None
   
-  val random = new java.util.Random()
+  def divide: (QuickSortNode, QuickSortNode) = {
+    val pivotPoint = Random.nextInt(list.length)
+    pivot = list(pivotPoint)
+    
+    val leftSide  = new ArrayBuffer[Int]()
+    val rightSide = new ArrayBuffer[Int]()
+    
+    for (i <- 0 until pivotPoint) {
+      (if (list(i) < pivot) leftSide else rightSide) += list(i)
+    }
+    
+    for (i <- pivotPoint + 1 until list.length) {
+      (if (list(i) < pivot) leftSide else rightSide) += list(i)
+    }
 
+    val leftNode = new QuickSortNode(leftSide, LeftTree(this))
+    val rightNode = new QuickSortNode(rightSide, RightTree(this))
+
+    (leftNode, rightNode) 
+  }
+
+  def combine: Option[ArrayBuffer[Int]] = {
+    (left, right) match {
+      case (Some(l), Some(r)) => Some ((l += pivot) ++= r)
+      case _                  => None
+    }
+  }
+}
+
+class QuickSortWorker(val id: Int, val workerPool: WorkerPool) extends Runnable {
+  private val queue = new WorkStealingQueue[QuickSortNode]()
+  var currentNode: Option[QuickSortNode] = None
   private val threshold = 100
 
-  def run(in: WU): Either[Seq[WU], ArrayBuffer[Int]] = {
-    val arr = in.input.head
-    
-    if (arr.length <= threshold) {
-      Right(insertionSort(arr))
-    } else {
-      val pivotPoint = random.nextInt(arr.length)
-      val pivot = arr(pivotPoint)
-      
-      val leftSide  = new ArrayBuffer[Int]()
-      val rightSide = new ArrayBuffer[Int]()
-      
-      for (i <- 0 until pivotPoint) {
-        (if (arr(i) < pivot) leftSide else rightSide) += arr(i)
+  def run(): Unit = {
+    while(workerPool.result.isEmpty) {
+      currentNode match {
+        case Some(node) => {
+          execute(node) match {
+            case Some(list) => workerPool.result = Some(list)
+            case None => {}
+          }
+        }
+        case None => currentNode = workerPool.steal(id)
       }
-      
-      for (i <- pivotPoint + 1 until arr.length) {
-        (if (arr(i) < pivot) leftSide else rightSide) += arr(i)
-      }
-
-      in.neededResults = 3
-      in.hasRun()
-      
-      val pivotBuffer = new ArrayBuffer[Int](1)
-      pivotBuffer += pivot
-      in.addResult(0, pivotBuffer)
-      
-      val left  = new WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]](1, Some(in), Seq(leftSide))
-      val right = new WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]](2, Some(in), Seq(rightSide))
-
-      Left(Seq(left, right))
     }
   }
 
-  def flatten(arr: Seq[ArrayBuffer[Int]]): ArrayBuffer[Int] = {
-    arr.length match {
-      case 0 => new ArrayBuffer[Int]()
-      case _ => if (arr.head != null) arr.head ++= flatten(arr.tail) else flatten(arr.tail)
+  def execute(node: QuickSortNode): Option[ArrayBuffer[Int]] = {
+    node.combine match {
+      case Some(list) => {
+        node.role match {
+          case Root => Some (list)
+          case LeftTree(p) => {
+            p.left = Some(list)
+            currentNode = queue.take()
+            None
+          }
+          case RightTree(p) => {
+            p.right = Some(list)
+            currentNode = queue.take()
+            None      
+          }
+        }
+      }
+      case None => {
+        if (node.list.length <= threshold) { // insertion sort
+          val list = insertionSort(node.list)
+          node.role match {
+            case Root => Some(list)
+            case LeftTree(p) => {
+              p.left = Some(list)
+              currentNode = queue.take()
+              None
+            }
+            case RightTree(p) => {
+              p.right = Some(list)
+              currentNode = queue.take()
+              None
+            }
+          }
+        } else {
+          val (leftNode, rightNode) = node.divide
+          currentNode = Some(leftNode)
+          queue.push(rightNode)
+
+          None
+        }
+      }
     }
   }
 
-  def complete(in: WU): ArrayBuffer[Int] = {
-    val pivot = in.results.head
-    val arrs = in.results.tail
-    arrs.head ++= pivot ++= flatten(arrs.tail)
-  }
+  def steal(): Option[QuickSortNode] = queue.steal()
 
   def insertionSort(arr: ArrayBuffer[Int]): ArrayBuffer[Int] = {
     var x = 0
