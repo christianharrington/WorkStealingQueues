@@ -17,8 +17,7 @@ object Test extends App {
     arr += r.nextInt(1000)
   }
 
-  val task = new QuickSort(arr)
-  val wp   = new WorkerPool(task)
+  val wp = new WorkerPool(QuickSort)
   val initial = new WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]](0, None, Seq(arr))
 
   val result = wp.run(Some(initial))
@@ -75,7 +74,7 @@ class QueueTests extends FlatSpec with Matchers {
   "Sorting using QuickSort" should "sort" in {
     import dk.itu.wsq.cases.QuickSort 
 
-    val l = 10000
+    val l = 10
     val r = new Random()
 
     val arr = new ArrayBuffer[Int](l)
@@ -84,8 +83,7 @@ class QueueTests extends FlatSpec with Matchers {
       arr += r.nextInt(1000)
     }
 
-    val task = new QuickSort(arr)
-    val wp   = new WorkerPool(task, 4)
+    val wp   = new WorkerPool(QuickSort, 1)
     val initial = new WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]](0, None, Seq(arr))
     
     val result = wp.run(Some(initial))
@@ -104,7 +102,7 @@ class QueueTests extends FlatSpec with Matchers {
   "Sorting using Scala's quicksort implementation" should "sort" in {
     import dk.itu.wsq.cases.QuickSort 
 
-    val l = 10000
+    val l = 1000
     val r = new Random()
 
     val arr = new ArrayBuffer[Int](l)

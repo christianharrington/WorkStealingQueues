@@ -3,26 +3,7 @@ package dk.itu.wsq.cases
 import dk.itu.wsq.{Task, WorkUnit}
 import scala.collection.mutable.ArrayBuffer
 
-object QuickSort {
-  def insertionSort(arr: ArrayBuffer[Int]): ArrayBuffer[Int] = {
-    var x = 0
-    var j = 0
-
-    for (i <- 0 until arr.length) {
-      x = arr(i)
-      j = i
-      while (j > 0 && arr(j - 1) > x) {
-        arr(j) = arr(j -1)
-        j = j - 1
-      }
-      arr(j) = x
-    }
-
-    arr
-  }
-}
-
-class QuickSort(toSort: ArrayBuffer[Int]) extends Task[ArrayBuffer[Int], ArrayBuffer[Int]] {
+object QuickSort extends Task[ArrayBuffer[Int], ArrayBuffer[Int]] {
   type WU = WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]]
   
   val random = new java.util.Random()
@@ -33,7 +14,7 @@ class QuickSort(toSort: ArrayBuffer[Int]) extends Task[ArrayBuffer[Int], ArrayBu
     val arr = in.input.head
     
     if (arr.length <= threshold) {
-      Right(QuickSort.insertionSort(arr))
+      Right(insertionSort(arr))
     } else {
       val pivotPoint = random.nextInt(arr.length)
       val pivot = arr(pivotPoint)
@@ -73,6 +54,23 @@ class QuickSort(toSort: ArrayBuffer[Int]) extends Task[ArrayBuffer[Int], ArrayBu
   def complete(in: WU): ArrayBuffer[Int] = {
     val pivot = in.results.head
     val arrs = in.results.tail
-    arrs.head ++= pivot ++= (if (arrs.tail.head != null) arrs.tail.head else new ArrayBuffer[Int]())
+    arrs.head ++= pivot ++= flatten(arrs.tail)
+  }
+
+  def insertionSort(arr: ArrayBuffer[Int]): ArrayBuffer[Int] = {
+    var x = 0
+    var j = 0
+
+    for (i <- 0 until arr.length) {
+      x = arr(i)
+      j = i
+      while (j > 0 && arr(j - 1) > x) {
+        arr(j) = arr(j -1)
+        j = j - 1
+      }
+      arr(j) = x
+    }
+
+    arr
   }
 }
