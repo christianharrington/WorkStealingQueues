@@ -24,8 +24,17 @@ class WorkerPool(val workerNumber: Int = 1) {
   }
 
   def steal(id: Int, next: Int = 1): Option[QuickSortNode] = {
-    val r = Random.nextInt(workerNumber)
-    if (r == id) steal(id) else workers(r).steal()
+    workers(Random.nextInt(workerNumber)).steal()
+    /* match {
+      case Some(a) => {
+        println(s"$id stealing from $r, got some")
+        Some(a) 
+      }
+      case None => {
+        println(s"$id stealing from $r, got none")
+        None
+      }
+    }*/
     /*val q = (id + next) % workerNumber
     val w = if (q == id) (q + 1) % workerNumber else q
 

@@ -44,6 +44,7 @@ class WorkStealingQueue[T] {
             Some(v)
           }
           else {
+            age.set(newAge)
             None
           }
         }

@@ -10,23 +10,31 @@ case class LeftTree(parent: QuickSortNode)  extends Tree
 case class RightTree(parent: QuickSortNode) extends Tree
 
 class QuickSortNode(val list: ArrayBuffer[Int], val role: Tree) {
-  var pivot: Int = _
-  var left: Option[ArrayBuffer[Int]] = None
+  import java.util.concurrent.atomic._
+
+  var pivot = 0
+  var left:  Option[ArrayBuffer[Int]] = None
   var right: Option[ArrayBuffer[Int]] = None
-  
+
+  private val hasBeenQueuedForCombining = new AtomicInteger(0)
+
   def divide: (QuickSortNode, QuickSortNode) = {
     val pivotPoint = Random.nextInt(list.length)
     pivot = list(pivotPoint)
     
-    val leftSide  = new ArrayBuffer[Int]()
-    val rightSide = new ArrayBuffer[Int]()
+    val leftSide  = new ArrayBuffer[Int](list.length / 2)
+    val rightSide = new ArrayBuffer[Int](list.length / 2)
     
+    var v = 0
+
     for (i <- 0 until pivotPoint) {
-      (if (list(i) < pivot) leftSide else rightSide) += list(i)
+      v = list(i)
+      (if (v < pivot) leftSide else rightSide) += v
     }
     
     for (i <- pivotPoint + 1 until list.length) {
-      (if (list(i) < pivot) leftSide else rightSide) += list(i)
+      v = list(i)
+      (if (v < pivot) leftSide else rightSide) += v
     }
 
     val leftNode = new QuickSortNode(leftSide, LeftTree(this))
@@ -41,74 +49,21 @@ class QuickSortNode(val list: ArrayBuffer[Int], val role: Tree) {
       case _                  => None
     }
   }
+
+  def addToQueueForCombining(): Boolean = {
+    val v = hasBeenQueuedForCombining.get
+
+    if(hasBeenQueuedForCombining.compareAndSet(v, v + 1)) {
+      v + 1 == 2
+    } else {
+      true
+    }
+  }
 }
 
-class QuickSortWorker(val id: Int, val workerPool: WorkerPool) extends Runnable {
-  private val queue = new WorkStealingQueue[QuickSortNode]()
-  var currentNode: Option[QuickSortNode] = None
-  private val threshold = 100
-
-  def run(): Unit = {
-    while(workerPool.result.isEmpty) {
-      currentNode match {
-        case Some(node) => {
-          execute(node) match {
-            case Some(list) => workerPool.result = Some(list)
-            case None => {}
-          }
-        }
-        case None => currentNode = workerPool.steal(id)
-      }
-    }
-  }
-
-  def execute(node: QuickSortNode): Option[ArrayBuffer[Int]] = {
-    node.combine match {
-      case Some(list) => {
-        node.role match {
-          case Root => Some (list)
-          case LeftTree(p) => {
-            p.left = Some(list)
-            currentNode = queue.take()
-            None
-          }
-          case RightTree(p) => {
-            p.right = Some(list)
-            currentNode = queue.take()
-            None      
-          }
-        }
-      }
-      case None => {
-        if (node.list.length <= threshold) { // insertion sort
-          val list = insertionSort(node.list)
-          node.role match {
-            case Root => Some(list)
-            case LeftTree(p) => {
-              p.left = Some(list)
-              currentNode = queue.take()
-              None
-            }
-            case RightTree(p) => {
-              p.right = Some(list)
-              currentNode = queue.take()
-              None
-            }
-          }
-        } else {
-          val (leftNode, rightNode) = node.divide
-          currentNode = Some(leftNode)
-          queue.push(rightNode)
-
-          None
-        }
-      }
-    }
-  }
-
-  def steal(): Option[QuickSortNode] = queue.steal()
-
+object QuickSortWorker {
   def insertionSort(arr: ArrayBuffer[Int]): ArrayBuffer[Int] = {
+    //println("Insertion sort")
     var x = 0
     var j = 0
 
@@ -124,4 +79,79 @@ class QuickSortWorker(val id: Int, val workerPool: WorkerPool) extends Runnable 
 
     arr
   }
+}
+
+class QuickSortWorker(val id: Int, val workerPool: WorkerPool) extends Runnable {
+  import QuickSortWorker._
+  import java.lang.Thread
+
+  private val queue = new WorkStealingQueue[QuickSortNode]()
+  var currentNode: Option[QuickSortNode] = None
+  private val threshold = 7
+
+  def run(): Unit = {
+    while(workerPool.result.isEmpty) {
+      currentNode match {
+        case Some(node) => {
+          execute(node) match {
+            case Right(list) => workerPool.result = Some(list)
+            case Left(q) => q match {
+              case Some(q) => currentNode = Some(q)
+              case None    => currentNode = queue.take()
+            }
+          }
+        }
+        case None => {
+          currentNode = workerPool.steal(id)
+        }
+      }
+    }
+  }
+
+  def execute(node: QuickSortNode): Either[Option[QuickSortNode], ArrayBuffer[Int]] = {
+    val combine = node.combine
+
+    // We couldn't combine our nodes, and the remaining list is too long
+    // to insertion sort, so we split the work up
+    if (combine.isEmpty && node.list.length > threshold) {
+      //println("Dividing...")
+      val (leftNode, rightNode) = node.divide
+      queue.push(rightNode)
+
+      Left(Some(leftNode))
+    }
+    // Either we can combine two nodes to get our result, or we can insertion
+    // sort the remaining list
+    else {
+      val list = combine getOrElse insertionSort(node.list)
+      node.role match {
+        case Root => {
+          //println("Done!")
+          Right(list)
+        }
+        case LeftTree(parent) => {
+          parent.left = Some(list)
+
+          if (parent.right.isDefined) {
+            //println("Left: Pushing parent")
+            queue.push(parent)
+          }
+
+          Left(None)
+        }
+        case RightTree(parent) => {
+          parent.right = Some(list)
+
+          if (parent.left.isDefined) {
+            //println("Right: Pushing parent")
+            queue.push(parent)
+          }
+
+          Left(None)
+        }
+      }
+    }
+  }
+
+  def steal(): Option[QuickSortNode] = queue.steal()
 }

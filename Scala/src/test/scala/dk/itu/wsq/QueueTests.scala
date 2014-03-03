@@ -1,29 +1,9 @@
 package dk.itu.wsq.test
 
 import dk.itu.wsq._
-import java.util.Random
+import dk.itu.wsq.cases._
+import scala.util.Random
 import org.scalatest._
-
-object Test extends App {
-  import dk.itu.wsq.cases.QuickSort
-  import scala.collection.mutable.ArrayBuffer
-
-  val l = 100000
-  val r = new Random()
-
-  val arr = new ArrayBuffer[Int](l)
-
-  for (i <- 0 until l) {
-    arr += r.nextInt(1000)
-  }
-
-  val wp = new WorkerPool(QuickSort)
-  val initial = new WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]](0, None, Seq(arr))
-
-  val result = wp.run(Some(initial))
-  
-  println(s"Result: $result")
-}
 
 class QueueTests extends FlatSpec with Matchers {
   import scala.collection.mutable.ArrayBuffer
@@ -55,7 +35,6 @@ class QueueTests extends FlatSpec with Matchers {
   }
 
   "InsertionSort" should "sort" in {
-    import dk.itu.wsq.cases.QuickSort 
     val l = 100
     val r = new Random()
 
@@ -65,28 +44,24 @@ class QueueTests extends FlatSpec with Matchers {
       arr += r.nextInt(1000)
     }
 
-    val result = QuickSort.insertionSort(arr)
+    val result = QuickSortWorker.insertionSort(arr)
     for (i <- 0 until (l - 1)) {
       assert(result(i) <= result(i + 1), s"Failed at index $i: ${result(i)}, ${result(i+1)}")
     }
   }
 
   "Sorting using QuickSort" should "sort" in {
-    import dk.itu.wsq.cases.QuickSort 
-
-    val l = 10
-    val r = new Random()
+    val l = 1000
 
     val arr = new ArrayBuffer[Int](l)
 
     for (i <- 0 until l) {
-      arr += r.nextInt(1000)
+      arr += Random.nextInt(1000)
     }
 
-    val wp   = new WorkerPool(QuickSort, 1)
-    val initial = new WorkUnit[ArrayBuffer[Int], ArrayBuffer[Int]](0, None, Seq(arr))
+    val wp = new WorkerPool(2)
     
-    val result = wp.run(Some(initial))
+    val result = wp.run(arr)
 
     result match {
       case Some(r) => {
@@ -100,15 +75,12 @@ class QueueTests extends FlatSpec with Matchers {
   }
 
   "Sorting using Scala's quicksort implementation" should "sort" in {
-    import dk.itu.wsq.cases.QuickSort 
-
     val l = 1000
-    val r = new Random()
 
     val arr = new ArrayBuffer[Int](l)
 
     for (i <- 0 until l) {
-      arr += r.nextInt(1000)
+      arr += Random.nextInt(1000)
     }
     
     val result = arr.sorted
