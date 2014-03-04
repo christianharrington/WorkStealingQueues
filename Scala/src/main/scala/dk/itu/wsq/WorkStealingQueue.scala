@@ -2,7 +2,9 @@ package dk.itu.wsq
 
 import java.util.concurrent.atomic._
 
-class Age(@volatile var tag: Int, @volatile var top: Int) {
+case class Tag(val value: Int) extends AnyVal
+
+case class Age(val tag: Tag, val top: Int) {
   override def equals(that: Any) = that match {
     case t: Age => tag == t.tag && top == t.top
     case _      => false
@@ -10,7 +12,7 @@ class Age(@volatile var tag: Int, @volatile var top: Int) {
 }
 
 class WorkStealingQueue[T] {
-  private val age = new AtomicReference[Age](new Age(0, 0))
+  private val age = new AtomicReference[Age](Age(Tag(0), 0))
   private var bottom: Int = 0
   private val queue = new AtomicReferenceArray[T](512)
 
@@ -38,7 +40,7 @@ class WorkStealingQueue[T] {
       }
       else {
         bottom = 0
-        val newAge = new Age(oldAge.tag + 1, 0)
+        val newAge = new Age(Tag(oldAge.tag.value + 1), 0)
         if (localBot == oldAge.top) {
           if (age.compareAndSet(oldAge, newAge)) {
             Some(v)
@@ -65,8 +67,7 @@ class WorkStealingQueue[T] {
     }
     else {
       val v = queue.get(oldAge.top)
-      val newAge = oldAge
-      newAge.top = newAge.top + 1
+      val newAge = Age(oldAge.tag, oldAge.top + 1)
 
       if (age.compareAndSet(oldAge, newAge)) {
         Some(v)

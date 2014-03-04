@@ -3,8 +3,7 @@ package dk.itu.wsq
 import scala.util.Random
 
 class WorkerPool(val workerNumber: Int = 1) {
-  import dk.itu.wsq.cases._
-  import scala.collection.mutable.ArrayBuffer
+  import dk.itu.wsq.cases.quicksort._
 
   private val workers = for (i <- 0 until workerNumber) yield {
     new QuickSortWorker(i, this)
@@ -13,9 +12,9 @@ class WorkerPool(val workerNumber: Int = 1) {
     new Thread(workers(i))
   }
 
-  @volatile var result: Option[ArrayBuffer[Int]] = None 
+  @volatile var result: Option[Array[Int]] = None 
 
-  def run(initial: ArrayBuffer[Int]): Option[ArrayBuffer[Int]] = {
+  def run(initial: Array[Int]): Option[Array[Int]] = {
     workers.head.currentNode = Some(new QuickSortNode(initial, Root))
     threads.foreach(t => t.start())
     threads.foreach(t => t.join())
