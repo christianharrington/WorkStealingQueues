@@ -19,10 +19,32 @@ class QuickSortNode(val arr: Array[Int], val role: Tree) {
   def pivot = _pivot
 
   private val hasBeenQueuedForCombining = new AtomicInteger(0)
+  private val length = arr.length
+
+  private def med3(a: Int, b: Int, c: Int) = {
+    if (arr(a) < arr(b)) {
+      if (arr(b) < arr(c)) b else if (arr(a) < arr(c)) c else a
+    } else {
+      if (arr(b) > arr(c)) b else if (arr(a) > arr(c)) c else a
+    }
+  }
 
   def divide: (QuickSortNode, QuickSortNode) = {
-    val pivotPoint = Random.nextInt(arr.length)
-    _pivot = arr(pivotPoint)
+    // Stolen from https://github.com/scala/scala/blob/v2.10.2/src/library/scala/util/Sorting.scala#L1
+    var m = (length >> 1)        // Small arrays, middle element
+    if (length > 7) {
+      var l = 0
+      var n = length - 1
+      if (length > 40) {        // Big arrays, pseudomedian of 9
+        val s = length / 8
+        l = med3(l, l+s, l+2*s)
+        m = med3(m-s, m, m+s)
+        n = med3(n-2*s, n-s, n)
+      }
+      m = med3(l, m, n) // Mid-size, med of 3
+    }
+
+    _pivot = arr(m)
     
     import scala.collection.mutable.ArrayBuilder
 
@@ -34,7 +56,7 @@ class QuickSortNode(val arr: Array[Int], val role: Tree) {
     var v = 0
     var i = 0
 
-    while (i < pivotPoint) {
+    while (i < m) {
       v = arr(i)
       if (v < _pivot) {
         leftSide += v
