@@ -25,7 +25,7 @@ class QuickSortWorker(val id: Int, val workerPool: WorkerPool) extends Runnable 
   import QuickSortWorker._
   import java.lang.Thread
 
-  private val queue: WorkStealingQueue[QuickSortNode] = new ABPQueue[QuickSortNode]()
+  private val queue: WorkStealingQueue[QuickSortNode] = new ChaseLevNaiveShrinkingQueue[QuickSortNode]()
   var currentNode: Option[QuickSortNode] = None
   private val threshold = 100
 

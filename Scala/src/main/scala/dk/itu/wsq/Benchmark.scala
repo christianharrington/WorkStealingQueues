@@ -15,7 +15,7 @@ object Benchmark extends App {
     (t, ret)
   }
 
-  val l = 10000000
+  val l = 1000000
 
   println(s"Generating Vector with $l number from 0 to $l ...")
   val testArray = Array.fill(l)(Random.nextInt(l))

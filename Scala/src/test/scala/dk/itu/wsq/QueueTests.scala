@@ -17,7 +17,11 @@ class QueueTests extends FlatSpec with Matchers {
 
   "Taking from a WSQ" should "be LIFO" in {
     val abp = new ABPQueue[Int]()
+    val cl = new ChaseLevQueue[Int]()
+    val cls = new ChaseLevNaiveShrinkingQueue[Int]()
     takingFromAWSQ(abp)
+    takingFromAWSQ(cl)
+    takingFromAWSQ(cls)
   }
 
   private def stealingFromAWSQ(queue: WorkStealingQueue[Int]) = {
@@ -29,7 +33,11 @@ class QueueTests extends FlatSpec with Matchers {
 
   "Stealing from a WSQ" should "be FIFO" in {
     val abp = new ABPQueue[Int]()
+    val cl = new ChaseLevQueue[Int]()
+    val cls = new ChaseLevNaiveShrinkingQueue[Int]()
     stealingFromAWSQ(abp)
+    stealingFromAWSQ(cl)
+    stealingFromAWSQ(cls)
   }
 
   private def takingFromAnEmptyWSQ(queue: WorkStealingQueue[Int]) = {
@@ -38,7 +46,11 @@ class QueueTests extends FlatSpec with Matchers {
 
   "Taking from an empty WSQ" should "return None" in {
     val abp = new ABPQueue[Int]()
+    val cl = new ChaseLevQueue[Int]()
+    val cls = new ChaseLevNaiveShrinkingQueue[Int]()
     takingFromAnEmptyWSQ(abp)
+    takingFromAnEmptyWSQ(cl)
+    takingFromAnEmptyWSQ(cls)
   }
 
   private def stealingFromAnEmptyWSQ(queue: WorkStealingQueue[Int]) = {
@@ -47,6 +59,10 @@ class QueueTests extends FlatSpec with Matchers {
 
   "Stealing from an empty WSQ" should "return None" in {
     val abp = new ABPQueue[Int]()
+    val cl = new ChaseLevQueue[Int]()
+    val cls = new ChaseLevNaiveShrinkingQueue[Int]()
     stealingFromAnEmptyWSQ(abp)
+    stealingFromAnEmptyWSQ(cl)
+    stealingFromAnEmptyWSQ(cls)
   }
 }
