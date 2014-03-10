@@ -1,6 +1,7 @@
 package dk.itu.wsq.cases.quicksort
 
-import dk.itu.wsq.{ WorkerPool, WorkStealingQueue }
+import dk.itu.wsq.queue._
+import dk.itu.wsq.{ WorkerPool }
 
 object QuickSortWorker {
   def insertionSort(arr: Array[Int]): Unit = {
@@ -24,7 +25,7 @@ class QuickSortWorker(val id: Int, val workerPool: WorkerPool) extends Runnable 
   import QuickSortWorker._
   import java.lang.Thread
 
-  private val queue = new WorkStealingQueue[QuickSortNode]()
+  private val queue: WorkStealingQueue[QuickSortNode] = new ABPQueue[QuickSortNode]()
   var currentNode: Option[QuickSortNode] = None
   private val threshold = 100
 

@@ -1,4 +1,4 @@
-package dk.itu.wsq
+package dk.itu.wsq.queue
 
 import java.util.concurrent.atomic._
 
@@ -11,18 +11,18 @@ case class Age(val tag: Tag, val top: Int) {
   }
 }
 
-class WorkStealingQueue[T] {
+class ABPQueue[E] extends WorkStealingQueue[E] {
   private val age = new AtomicReference[Age](Age(Tag(0), 0))
   private var bottom: Int = 0
-  private val queue = new AtomicReferenceArray[T](512)
+  private val queue = new AtomicReferenceArray[E](512)
 
-  def push(v: T): Unit = {
+  def push(v: E): Unit = {
     val localBot = bottom
     queue.set(localBot, v)
     bottom = localBot + 1
   }
 
-  def take(): Option[T] = {
+  def take(): Option[E] = {
     val oldBottom = bottom
 
     if (oldBottom == 0) {
@@ -58,7 +58,7 @@ class WorkStealingQueue[T] {
     }
   }
 
-  def steal(): Option[T] = {
+  def steal(): Option[E] = {
     val oldAge = age.get
     val localBot = bottom
 
@@ -79,6 +79,4 @@ class WorkStealingQueue[T] {
   }
 
   def length = bottom - age.get.top
-
-  def isEmpty = length == 0
 }
