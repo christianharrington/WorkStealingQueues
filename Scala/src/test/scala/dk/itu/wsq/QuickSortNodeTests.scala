@@ -10,7 +10,7 @@ class QuickSortNodeTests extends FlatSpec with Matchers {
     val l = 10000
     val originalArr = Array.fill(l)(Random.nextInt(l))
 
-    val originalNode = new QuickSortNode(originalArr, Root)
+    val originalNode = new QuickSortNode(originalArr, Root())
 
     val (left, right) = originalNode.divide
     originalNode.left  = Some(left.arr)
@@ -23,7 +23,7 @@ class QuickSortNodeTests extends FlatSpec with Matchers {
     val l = 10000
     val originalArr = Array.fill(l)(Random.nextInt(l))
 
-    val originalNode = new QuickSortNode(originalArr, Root)
+    val originalNode = new QuickSortNode(originalArr, Root())
 
     val (left, right) = originalNode.divide
 
@@ -38,7 +38,7 @@ class QuickSortNodeTests extends FlatSpec with Matchers {
     val l = 10000
     val originalArr = Array.fill(l)(Random.nextInt(l))
 
-    val originalNode = new QuickSortNode(originalArr, Root)
+    val originalNode = new QuickSortNode(originalArr, Root())
 
     val (left, right) = originalNode.divide
     originalNode.left  = Some(left.arr)
@@ -57,7 +57,6 @@ class QuickSortNodeTests extends FlatSpec with Matchers {
 
   "InsertionSort" should "sort" in {
     val l = 100
-    val r = new Random()
 
     val arr = Array.fill(l)(Random.nextInt(l))
 

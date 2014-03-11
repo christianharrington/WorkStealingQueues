@@ -11,14 +11,14 @@ class QuickSortWorkerTests extends FlatSpec with Matchers {
 
     val arr = Array.fill(l)(Random.nextInt(l))
 
-    val wp = new WorkerPool(2)
+    val wp = new QuickSortWorkerPool(2)
     
-    val result = wp.run(arr)
+    val result = wp.run(QuickSortNode(arr, Root()))
 
     result match {
       case Some(r) => {
         for (i <- 0 until (l - 1)) {
-          assert(r(i) <= r(i + 1), s"Failed at index $i: ${r(i)}, ${r(i+1)}\n $r")
+          assert(r(i) <= r(i + 1), s"Failed at index $i: ${r(i)}, ${r(i+1)}\n {$r}")
         }
         assert(r.length == l)
       }

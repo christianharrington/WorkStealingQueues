@@ -1,11 +1,7 @@
 package dk.itu.wsq.cases.quicksort
 
+import dk.itu.wsq._
 import scala.util.Random
-
-sealed abstract class Tree()
-object Root extends Tree
-case class LeftTree(parent: QuickSortNode)  extends Tree
-case class RightTree(parent: QuickSortNode) extends Tree
 
 object QuickSortNode {
   def insertionSort(arr: Array[Int]): Unit = {
@@ -25,7 +21,7 @@ object QuickSortNode {
   }
 }
 
-class QuickSortNode(val arr: Array[Int], val role: Tree) {
+case class QuickSortNode(val arr: Array[Int], val role: Tree[QuickSortNode]) extends Node {
   import java.util.concurrent.atomic._
 
   private var _pivot = 0

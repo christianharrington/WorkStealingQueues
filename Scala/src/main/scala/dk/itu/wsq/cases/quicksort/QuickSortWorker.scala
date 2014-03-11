@@ -1,9 +1,12 @@
 package dk.itu.wsq.cases.quicksort
 
 import dk.itu.wsq.queue._
-import dk.itu.wsq.{ WorkerPool }
+import dk.itu.wsq._
 
-class QuickSortWorker(val id: Int, val workerPool: WorkerPool, val threshold: Int = 100) extends Runnable {
+class QuickSortWorker(
+  val id: Int, 
+  val workerPool: WorkerPool[QuickSortNode, QuickSortWorker, Array[Int]], 
+  val threshold: Int = 100) extends Worker[QuickSortNode] {
   import java.lang.Thread
 
   private val queue: WorkStealingQueue[QuickSortNode] = new ChaseLevNaiveShrinkingQueue[QuickSortNode]()
@@ -45,7 +48,7 @@ class QuickSortWorker(val id: Int, val workerPool: WorkerPool, val threshold: In
     else {
       val arr = combine getOrElse {node.insertionSort(); node.arr}
       node.role match {
-        case Root => {
+        case Root() => {
           //println("Done!")
           Right(arr)
         }
