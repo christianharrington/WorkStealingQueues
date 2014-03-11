@@ -1,8 +1,6 @@
 package dk.itu.wsq
 
 trait Benchmark {
-  type Input
-
   def time[A](f: => A) = {
     val s = System.nanoTime
     val ret = f
@@ -18,30 +16,58 @@ trait Benchmark {
 
 object BenchmarkApp extends App {
   import dk.itu.wsq.cases.quicksort.QuickSortBenchmark
+  import dk.itu.wsq.queue._
+  import scala.util.Random
 
   val tries = 10
   val workers = 4
 
-  val benchmarks: List[Benchmark] = List(
-    QuickSortBenchmark(workers, 100000)
+  val queueImpls: List[QueueImplementation] = List(
+    ABPQueue,
+    ChaseLevQueue,
+    ChaseLevNaiveShrinkingQueue
   )
 
+  val seed = Random.nextLong()
+
+  val benchmarks: List[QueueImplementation => Benchmark] = List(
+    q => QuickSortBenchmark(workers, 100000, q, seed)
+  )
+
+  println("Starting benchmarks")
+
   val results: Map[String, Seq[Double]] = (for (b <- benchmarks) yield {
-    b.name -> (for (i <- 0 until tries) yield {
-      Thread.sleep(500)
-      b.run()
-    })
-  }).toMap
+    for (q <- queueImpls) yield {
+      val bq = b(q)
+      // Run the benchmark twice for fun
+      println(s"\nWarming up for ${bq.name}...")
+      bq.run()
+      bq.run()
+      println("Starting.")
+
+      val bs = bq.name -> (for (i <- 0 until tries) yield {
+        Thread.sleep(500)
+        print(s"${i+1}/$tries ")
+        bq.run()
+      })
+
+      println("\nDone")
+      bs
+    }
+  }).flatten.toMap
+
+  println("\nReport:")
 
   results foreach { case (b, ts) =>
-    println(b)
+    println(s"\n$b")
 
-    ts.zipWithIndex.foreach { case (t, i) =>
-      println(s"Try $i: $t")
+    print("Times: ")
+    ts.foreach { t =>
+      print("%.2f ".format(t))
     }
 
     val avg = ts.fold(0.0)((a, b) => a + b) / ts.length
 
-    println(s"Avg: $avg")
+    println("\nAvg: %.2f".format(avg))
   }
 }

@@ -1,5 +1,9 @@
 package dk.itu.wsq.queue
 
+object ABPQueue extends QueueImplementation {
+  override def toString(): String = "ABP Queue"
+}
+
 import java.util.concurrent.atomic._
 
 case class Tag(val value: Int) extends AnyVal

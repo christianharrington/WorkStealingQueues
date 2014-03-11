@@ -1,5 +1,7 @@
 package dk.itu.wsq.queue
 
+abstract class QueueImplementation
+
 trait WorkStealingQueue[E] {
 
 	def push(e: E): Unit

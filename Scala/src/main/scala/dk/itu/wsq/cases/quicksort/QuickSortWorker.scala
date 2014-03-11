@@ -4,12 +4,12 @@ import dk.itu.wsq.queue._
 import dk.itu.wsq._
 
 class QuickSortWorker(
-  val id: Int, 
-  val workerPool: WorkerPool[QuickSortNode, QuickSortWorker, Array[Int]], 
+  val id: Int,
+  private val queue: WorkStealingQueue[QuickSortNode],
+  val workerPool: QuickSortWorkerPool, 
   val threshold: Int = 100) extends Worker[QuickSortNode] {
   import java.lang.Thread
 
-  private val queue: WorkStealingQueue[QuickSortNode] = new ChaseLevNaiveShrinkingQueue[QuickSortNode]()
   var currentNode: Option[QuickSortNode] = None
 
   def run(): Unit = {

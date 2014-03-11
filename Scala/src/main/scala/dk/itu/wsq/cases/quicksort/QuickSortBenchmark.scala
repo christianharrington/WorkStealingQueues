@@ -1,16 +1,18 @@
 package dk.itu.wsq.cases.quicksort
 
 import dk.itu.wsq._
-import scala.util.Random
+import dk.itu.wsq.queue._
 
-case class QuickSortBenchmark(workers: Int, length: Int) extends Benchmark {
-  def name = s"Quick Sort with $workers workers and array of length $length"
+case class QuickSortBenchmark(workers: Int, length: Int, queueImpl: QueueImplementation, seed: Long) extends Benchmark {
+  def name = s"Quick Sort with $workers workers and array of length $length, using $queueImpl"
+
+  private val random = new java.util.Random(seed)
 
   def run(): Double = {
-    val testArray = Array.fill(length)(Random.nextInt(length))
-    val wp = new QuickSortWorkerPool(workers)
+    val in = Array.fill(length)(random.nextInt(length))
+    val wp = new QuickSortWorkerPool(workers, queueImpl)
 
-    val (t, _) = time(wp.run(QuickSortNode(testArray, Root[QuickSortNode]())))
+    val (t, _) = time(wp.run(QuickSortNode(in, Root[QuickSortNode]())))
     
     t
   }
