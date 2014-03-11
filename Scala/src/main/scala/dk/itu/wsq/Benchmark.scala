@@ -1,50 +1,47 @@
 package dk.itu.wsq
 
-object Benchmark extends App {
-  import dk.itu.wsq._
-  import dk.itu.wsq.cases.quicksort._
-  import scala.util.Random
-  import scala.collection.immutable.Vector
+trait Benchmark {
+  type Input
 
   def time[A](f: => A) = {
     val s = System.nanoTime
     val ret = f
     val t = (System.nanoTime - s)/1e6
 
-    println(s"Time: $t ms")
     (t, ret)
   }
 
-  val l = 1000000
+  def run(): Double
 
-  println(s"Generating Vector with $l number from 0 to $l ...")
-  val testArray = Array.fill(l)(Random.nextInt(l))
-  println("Done")
-  
-  val workers = scala.Console.readInt()
-  println(s"Running with $workers workers")
+  def name: String
+}
 
-  val tries = 5
+object BenchmarkApp extends App {
+  import dk.itu.wsq.cases.quicksort.QuickSortBenchmark
 
-  val times = for (i <- 0 until tries) yield {
-    val wp = new QuickSortWorkerPool(workers)
+  val tries = 10
+  val workers = 4
 
-    println("Starting...")
-    val (t0, r0) = time(wp.run(QuickSortNode(testArray, Root[QuickSortNode]())))
-    println("Done")
+  val benchmarks: List[Benchmark] = List(
+    QuickSortBenchmark(workers, 100000)
+  )
 
-    val a = testArray.clone()
+  val results: Map[String, Seq[Double]] = (for (b <- benchmarks) yield {
+    b.name -> (for (i <- 0 until tries) yield {
+      Thread.sleep(500)
+      b.run()
+    })
+  }).toMap
 
-    println("Starting...")
-    val (t1, r1) = time(scala.util.Sorting.quickSort(a))
-    println("Done\n\n")
+  results foreach { case (b, ts) =>
+    println(b)
 
-    (t0, t1)
+    ts.zipWithIndex.foreach { case (t, i) =>
+      println(s"Try $i: $t")
+    }
+
+    val avg = ts.fold(0.0)((a, b) => a + b) / ts.length
+
+    println(s"Avg: $avg")
   }
-
-  val (times0, times1) = times.unzip
-
-  val avg0 = times0.sum / tries
-  val avg1 = times1.sum / tries
-  println(s"Avgs: $avg0, $avg1")
 }
