@@ -25,7 +25,8 @@ object BenchmarkApp extends App {
   val queueImpls: List[QueueImplementation] = List(
     ABPQueue,
     ChaseLevQueue,
-    ChaseLevNaiveShrinkingQueue
+    ChaseLevNaiveShrinkingQueue,
+    LifoIWSQueue
   )
 
   val seed = Random.nextLong()

@@ -9,6 +9,7 @@ class QuickSortWorkerPool(val workerNumber: Int, val queueImpl: QueueImplementat
       case ABPQueue => new ABPQueue[QuickSortNode]()
       case ChaseLevQueue => new ChaseLevQueue[QuickSortNode]()
       case ChaseLevNaiveShrinkingQueue => new ChaseLevNaiveShrinkingQueue[QuickSortNode]()
+      case LifoIWSQueue => new LifoIWSQueue[QuickSortNode]()
     }
     new QuickSortWorker(i, q, this)
   }).toList
