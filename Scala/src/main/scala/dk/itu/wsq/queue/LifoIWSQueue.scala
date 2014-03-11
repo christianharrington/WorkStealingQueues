@@ -1,6 +1,8 @@
 package dk.itu.wsq.queue
 
-object LifoIWSQueue extends QueueImplementation
+object LifoIWSQueue extends QueueImplementation {
+  override def toString(): String = "Idempotent Work Stealing Queue (LIFO)"
+}
 
 class LifoIWSQueue[E: Manifest] extends WorkStealingQueue[E] {
 
@@ -52,7 +54,7 @@ class LifoIWSQueue[E: Manifest] extends WorkStealingQueue[E] {
     None
   }
 
-  def expand(): Unit = {    
+  def expand(): Unit = {
     val newCapacity = capacity * 2
     val arr = new Array[E](newCapacity)
 
