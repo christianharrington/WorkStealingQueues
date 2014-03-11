@@ -25,16 +25,4 @@ class QuickSortWorkerTests extends FlatSpec with Matchers {
       case None => assert(false)
     }
   }
-
-  "InsertionSort" should "sort" in {
-    val l = 100
-    val r = new Random()
-
-    val arr = Array.fill(l)(Random.nextInt(l))
-
-    QuickSortWorker.insertionSort(arr)
-    for (i <- 0 until (l - 1)) {
-      assert(arr(i) <= arr(i + 1), s"Failed at index $i: ${arr(i)}, ${arr(i+1)}")
-    }
-  }
 }

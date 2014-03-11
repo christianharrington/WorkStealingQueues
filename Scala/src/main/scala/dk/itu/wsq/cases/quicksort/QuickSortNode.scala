@@ -7,6 +7,24 @@ object Root extends Tree
 case class LeftTree(parent: QuickSortNode)  extends Tree
 case class RightTree(parent: QuickSortNode) extends Tree
 
+object QuickSortNode {
+  def insertionSort(arr: Array[Int]): Unit = {
+    //println("Insertion sort")
+    var x = 0
+    var j = 0
+
+    for (i <- 0 until arr.length) {
+      x = arr(i)
+      j = i
+      while (j > 0 && arr(j - 1) > x) {
+        arr(j) = arr(j -1)
+        j = j - 1
+      }
+      arr(j) = x
+    }
+  }
+}
+
 class QuickSortNode(val arr: Array[Int], val role: Tree) {
   import java.util.concurrent.atomic._
 
@@ -21,6 +39,8 @@ class QuickSortNode(val arr: Array[Int], val role: Tree) {
   private val hasBeenQueuedForCombining = new AtomicInteger(0)
   private val length = arr.length
 
+  def insertionSort(): Unit = QuickSortNode.insertionSort(arr)
+
   private def med3(a: Int, b: Int, c: Int) = {
     if (arr(a) < arr(b)) {
       if (arr(b) < arr(c)) b else if (arr(a) < arr(c)) c else a
@@ -30,6 +50,8 @@ class QuickSortNode(val arr: Array[Int], val role: Tree) {
   }
 
   def divide: (QuickSortNode, QuickSortNode) = {
+    import scala.collection.mutable.ArrayBuilder
+
     // Stolen from https://github.com/scala/scala/blob/v2.10.2/src/library/scala/util/Sorting.scala#L1
     var m = (length >> 1)        // Small arrays, middle element
     if (length > 7) {
@@ -45,8 +67,6 @@ class QuickSortNode(val arr: Array[Int], val role: Tree) {
     }
 
     _pivot = arr(m)
-    
-    import scala.collection.mutable.ArrayBuilder
 
     val leftSide  = new ArrayBuilder.ofInt()
     val rightSide = new ArrayBuilder.ofInt()
