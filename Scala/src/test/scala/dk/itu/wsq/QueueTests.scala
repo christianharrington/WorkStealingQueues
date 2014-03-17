@@ -10,14 +10,14 @@ class QueueTests extends FlatSpec with Matchers with QueueHelper {
 
   type TestQ = WorkStealingQueue[Int]
 
-  "Taking from a WSQ" should "be LIFO" in runWithEveryQueue { q: TestQ =>
+  "Taking from a WSQ" should "be LIFO" in runWithQueues(everyQueueExcept(IdempotentFIFOImpl): _*) { q: TestQ =>
     val items = (1 to 100)
     items.foreach(i => q.push(i))
 
     items.reverse.foreach(i => Some(i) should be (q.take))
   }
 
-  "Stealing from a WSQ" should "be FIFO" in runWithQueues(everyQueueExcept(LifoIWSQueueImpl): _*) { q: TestQ =>
+  "Stealing from a WSQ" should "be FIFO" in runWithEveryQueue { q: TestQ =>
     val items = (1 to 100)
     items.foreach(i => q.push(i))
     
