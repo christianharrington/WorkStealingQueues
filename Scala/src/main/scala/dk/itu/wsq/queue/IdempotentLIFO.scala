@@ -1,6 +1,6 @@
 package dk.itu.wsq.queue
 
-class LifoIWSQueue[E: Manifest] extends WorkStealingQueue[E] {
+class IdempotentLIFO[E: Manifest] extends WorkStealingQueue[E] {
 
   import java.util.concurrent.atomic._
 

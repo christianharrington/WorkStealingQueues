@@ -9,6 +9,8 @@ scalaVersion := "2.10.3"
 scalacOptions += "-deprecation"
 
 scalacOptions += "-feature"
+
+scalacOptions += "-Xfatal-warnings"
  
 resolvers ++= Seq()
  
