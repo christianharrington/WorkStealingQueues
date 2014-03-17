@@ -15,7 +15,7 @@ object LifoIWSQueueImpl extends QueueImplementation {
 }
 
 object AllQueueImpls {
-  def apply(): Seq[QueueImplementation] = List(
+  def apply(): Seq[QueueImplementation] = Seq(
     ABPQueueImpl,
     ChaseLevQueueImpl,
     ChaseLevNaiveShrinkingQueueImpl,
@@ -58,5 +58,9 @@ trait QueueHelper {
 
   def runWithEveryQueueImpl(f: QueueImplementation => Unit): Unit = {
     runWithQueueImpls(AllQueueImpls(): _*)(f)
+  }
+
+  def everyQueueExcept(qis: QueueImplementation*): Seq[QueueImplementation] = {
+    AllQueueImpls().filterNot(q => qis.contains(q))
   }
 }
