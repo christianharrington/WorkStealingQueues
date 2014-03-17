@@ -39,10 +39,6 @@ class CircularArray[E: Manifest](val logSize: Int) {
   
 }
 
-object ChaseLevQueue extends QueueImplementation {
-  override def toString(): String =  "Chase-Lev Queue" 
-}
-
 class ChaseLevQueue[E: Manifest] extends WorkStealingQueue[E] {
   import java.util.concurrent.atomic._
   
@@ -144,10 +140,6 @@ trait ChaseLevShrinkingQueue[E] extends ChaseLevQueue[E] {
       }
     }    
   }
-}
-
-object ChaseLevNaiveShrinkingQueue extends QueueImplementation {
-  override def toString(): String = "Chase-Lev Naive Shrinking Queue"
 }
 
 class ChaseLevNaiveShrinkingQueue[E: Manifest] extends ChaseLevShrinkingQueue[E] {

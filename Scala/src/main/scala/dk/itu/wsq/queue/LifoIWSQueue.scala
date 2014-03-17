@@ -1,9 +1,5 @@
 package dk.itu.wsq.queue
 
-object LifoIWSQueue extends QueueImplementation {
-  override def toString(): String = "Idempotent Work Stealing Queue (LIFO)"
-}
-
 class LifoIWSQueue[E: Manifest] extends WorkStealingQueue[E] {
 
   import java.util.concurrent.atomic._

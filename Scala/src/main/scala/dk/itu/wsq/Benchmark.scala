@@ -1,5 +1,7 @@
 package dk.itu.wsq
 
+import dk.itu.wsq.queue._
+
 trait Benchmark {
   def time[A](f: => A) = {
     val s = System.nanoTime
@@ -22,13 +24,6 @@ object BenchmarkApp extends App {
   val tries = 10
   val workers = 4
 
-  val queueImpls: List[QueueImplementation] = List(
-    ABPQueue,
-    ChaseLevQueue,
-    ChaseLevNaiveShrinkingQueue,
-    LifoIWSQueue
-  )
-
   val seed = Random.nextLong()
 
   val benchmarks: List[QueueImplementation => Benchmark] = List(
@@ -38,7 +33,7 @@ object BenchmarkApp extends App {
   println("Starting benchmarks")
 
   val results: Map[String, Seq[Double]] = (for (b <- benchmarks) yield {
-    for (q <- queueImpls) yield {
+    for (q <- AllQueueImpls()) yield {
       val bq = b(q)
       // Run the benchmark twice for fun
       println(s"\nWarming up for ${bq.name}...")

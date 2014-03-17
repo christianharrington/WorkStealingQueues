@@ -8,11 +8,11 @@ class SpanningTreeTests extends FlatSpec with Matchers {
   "Traversal of a graph" should "find a spanning tree" in {
     val graph = GraphBuilder(100, Random.nextLong())
 
-    val workerPool = new SpanningTreeWorkerPool(2)
+    //val workerPool = new SpanningTreeWorkerPool(2)
 
     //val result = 
 
-    graph.traverse()
+    //graph.traverse()
 
   }
 }

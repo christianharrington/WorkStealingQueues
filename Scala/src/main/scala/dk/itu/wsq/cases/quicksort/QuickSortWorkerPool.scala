@@ -3,15 +3,11 @@ package dk.itu.wsq.cases.quicksort
 import dk.itu.wsq._
 import dk.itu.wsq.queue._
 
-class QuickSortWorkerPool(val workerNumber: Int, val queueImpl: QueueImplementation) extends WorkerPool[QuickSortNode, QuickSortWorker, Array[Int]] {
+class QuickSortWorkerPool(val workerNumber: Int, val queueImpl: QueueImplementation)
+    extends WorkerPool[QuickSortNode, QuickSortWorker, Array[Int]] 
+    with QueueHelper {
   private val _workers = (for (i <- 0 until workerNumber) yield {
-    val q = queueImpl match {
-      case ABPQueue => new ABPQueue[QuickSortNode]()
-      case ChaseLevQueue => new ChaseLevQueue[QuickSortNode]()
-      case ChaseLevNaiveShrinkingQueue => new ChaseLevNaiveShrinkingQueue[QuickSortNode]()
-      case LifoIWSQueue => new LifoIWSQueue[QuickSortNode]()
-    }
-    new QuickSortWorker(i, q, this)
+    new QuickSortWorker(i, queueImplToQueue(queueImpl), this)
   }).toList
 
   private val _threads = for (w <- workers) yield {
