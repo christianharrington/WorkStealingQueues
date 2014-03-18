@@ -2,6 +2,9 @@ package dk.itu.wsq.cases.spanningtree
 
 object GraphBuilder {
   import scala.util.Random
+  import scala.collection.mutable
+
+  private val graphCache = mutable.Map[Long, Set[SpanningTreeNode]]()
 
   private def randomNeighbor(thisNode: Int, nodes: IndexedSeq[SpanningTreeNode], random: Random): SpanningTreeNode = {
     val nextNeighbour = random.nextInt(nodes.length)
@@ -12,9 +15,7 @@ object GraphBuilder {
     }
   }
 
-  def apply(numberOfNodes: Int, maxNumberOfNeighbors: Int, seed: Long): Set[SpanningTreeNode] = buildGraph(numberOfNodes, maxNumberOfNeighbors, seed)
-
-  def buildGraph(numberOfNodes: Int, maxNumberOfNeighbors: Int, seed: Long): Set[SpanningTreeNode] = {
+  private def buildGraph(numberOfNodes: Int, maxNumberOfNeighbors: Int, seed: Long): Set[SpanningTreeNode] = {
     // Create nodes
     val nodes = (for (i <- 1 to numberOfNodes) yield new SpanningTreeNode(i))
 
@@ -31,6 +32,22 @@ object GraphBuilder {
       }
     }
 
-    nodes.toSet
+    val n = nodes.toSet
+    graphCache += seed -> n
+    n
+  }
+
+  private def resetGraph(nodes: Set[SpanningTreeNode]) = {
+    nodes.par.foreach(n => n.reset())
+    nodes
+  }
+
+  def apply(numberOfNodes: Int, maxNumberOfNeighbors: Int, seed: Long): Set[SpanningTreeNode] = {
+    if (graphCache.contains(seed)) {
+      resetGraph(graphCache(seed))
+    }
+    else {
+      buildGraph(numberOfNodes, maxNumberOfNeighbors, seed)
+    }
   }
 }

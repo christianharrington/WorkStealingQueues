@@ -53,5 +53,10 @@ class SpanningTreeNode(val id: Int) extends Node {
       case _ => false
     }
   }
-  
+
+  def reset(): Unit = {
+    _color = None
+    parent = None
+    visited.set(false)
+  }
 }
