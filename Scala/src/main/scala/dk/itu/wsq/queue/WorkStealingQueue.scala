@@ -10,24 +10,24 @@ object ChaseLevQueueImpl extends QueueImplementation {
 object ChaseLevNaiveShrinkingQueueImpl extends QueueImplementation {
   override def toString(): String = "Chase-Lev Naive Shrinking Queue"
 }
-/*object IdempotentLIFOImpl extends QueueImplementation {
+object IdempotentLIFOImpl extends QueueImplementation {
   override def toString(): String = "Idempotent Work Stealing Queue (LIFO)"
-}*/
+}
 object IdempotentFIFOImpl extends QueueImplementation {
   override def toString(): String = "Idempotent Work Stealing Queue (FIFO)"
 }
-/*object IdempotentDEImpl extends QueueImplementation {
+object IdempotentDEImpl extends QueueImplementation {
   override def toString(): String = "Idempotent Work Stealing Queue (Double-Ended)"
-}*/
+}
 
 object AllQueueImpls {
   def apply(): Seq[QueueImplementation] = Seq(
     ABPQueueImpl,
     ChaseLevQueueImpl,
-    ChaseLevNaiveShrinkingQueueImpl)//,
-    //IdempotentLIFOImpl,
-    //IdempotentFIFOImpl,
-    //IdempotentDEImpl)
+    ChaseLevNaiveShrinkingQueueImpl,
+    IdempotentLIFOImpl,
+    IdempotentFIFOImpl,
+    IdempotentDEImpl)
 }
 
 trait WorkStealingQueue[E] {
@@ -45,9 +45,9 @@ trait QueueHelper {
     case ABPQueueImpl                    => new ABPQueue[E]()
     case ChaseLevQueueImpl               => new ChaseLevQueue[E]()
     case ChaseLevNaiveShrinkingQueueImpl => new ChaseLevNaiveShrinkingQueue[E]()
-    //case IdempotentLIFOImpl              => new IdempotentLIFO[E]()
+    case IdempotentLIFOImpl              => new IdempotentLIFO[E]()
     case IdempotentFIFOImpl              => new IdempotentFIFO[E]()
-    //case IdempotentDEImpl                => new IdempotentDE[E]()
+    case IdempotentDEImpl                => new IdempotentDE[E]()
   }
 
   def runWithQueues[E: Manifest](qs: QueueImplementation*)(f: WorkStealingQueue[E] => Unit) : Unit = {
