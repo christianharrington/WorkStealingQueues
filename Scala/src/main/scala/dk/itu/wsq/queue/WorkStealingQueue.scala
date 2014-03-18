@@ -42,7 +42,7 @@ trait WorkStealingQueue[E] {
 
 trait QueueHelper {
   def queueImplToQueue[E: Manifest](qi: QueueImplementation): WorkStealingQueue[E] = qi match {
-    case ABPQueueImpl                    => new ABPQueue[E]()
+    case ABPQueueImpl                    => new ABPQueue[E](512)
     case ChaseLevQueueImpl               => new ChaseLevQueue[E]()
     case ChaseLevNaiveShrinkingQueueImpl => new ChaseLevNaiveShrinkingQueue[E]()
     case IdempotentLIFOImpl              => new IdempotentLIFO[E]()

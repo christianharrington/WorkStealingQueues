@@ -11,10 +11,10 @@ case class Age(val tag: Tag, val top: Int) {
   }
 }
 
-class ABPQueue[E] extends WorkStealingQueue[E] {
+class ABPQueue[E](val size: Int) extends WorkStealingQueue[E] {
   private val age = new AtomicReference[Age](Age(Tag(0), 0))
   private var bottom: Int = 0
-  private val queue = new AtomicReferenceArray[E](25000)
+  private val queue = new AtomicReferenceArray[E](size)
 
   def push(v: E): Unit = {
     val localBot = bottom
