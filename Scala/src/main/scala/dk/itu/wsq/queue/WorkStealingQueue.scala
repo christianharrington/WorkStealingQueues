@@ -19,6 +19,9 @@ object IdempotentFIFOImpl extends QueueImplementation {
 object IdempotentDEImpl extends QueueImplementation {
   override def toString(): String = "Idempotent Work Stealing Queue (Double-Ended)"
 }
+object DuplicatingQueueImpl extends QueueImplementation {
+  override def toString(): String = "Duplicating Queue"
+}
 
 object AllQueueImpls {
   def apply(): Seq[QueueImplementation] = Seq(
@@ -27,7 +30,8 @@ object AllQueueImpls {
     ChaseLevNaiveShrinkingQueueImpl,
     IdempotentLIFOImpl,
     IdempotentFIFOImpl,
-    IdempotentDEImpl)
+    IdempotentDEImpl,
+    DuplicatingQueueImpl)
 }
 
 trait WorkStealingQueue[E] {
@@ -48,6 +52,7 @@ trait QueueHelper {
     case IdempotentLIFOImpl              => new IdempotentLIFO[E]()
     case IdempotentFIFOImpl              => new IdempotentFIFO[E]()
     case IdempotentDEImpl                => new IdempotentDE[E]()
+    case DuplicatingQueueImpl            => new DuplicatingQueue[E](1000000)
   }
 
   def runWithQueues[E: Manifest](qs: QueueImplementation*)(f: WorkStealingQueue[E] => Unit) : Unit = {

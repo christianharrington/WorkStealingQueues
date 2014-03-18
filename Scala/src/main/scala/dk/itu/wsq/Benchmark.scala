@@ -30,9 +30,9 @@ object BenchmarkApp extends App with QueueHelper {
 
   val seed = Random.nextLong()
   val benchmarks: Seq[Benchmark] = Seq(
-    QuickSortBenchmark(workers, 50000000, seed),
-    RawBenchmark(workers, 9, 8, seed),
-    SpanningTreeBenchmark(workers, 10000, 100, seed)
+    QuickSortBenchmark(workers, 5000000, seed),
+    RawBenchmark(workers, 9, 6, seed),
+    SpanningTreeBenchmark(workers, 100000, 100, seed)
   )
 
   System.in.read()

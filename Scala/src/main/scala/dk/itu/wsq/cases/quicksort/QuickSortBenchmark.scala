@@ -17,5 +17,5 @@ case class QuickSortBenchmark(workers: Int, length: Int, seed: Long) extends Ben
     t
   }
 
-  def worksWith: Seq[QueueImplementation] = everyQueueExcept(IdempotentFIFOImpl, IdempotentLIFOImpl, IdempotentDEImpl)
+  def worksWith: Seq[QueueImplementation] = everyQueueExcept(IdempotentFIFOImpl, IdempotentLIFOImpl, IdempotentDEImpl, DuplicatingQueueImpl)
 }
