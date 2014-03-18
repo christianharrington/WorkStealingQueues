@@ -7,8 +7,8 @@ case class RawTreeBuilder(seed: Long) {
 
   val random = new java.util.Random(seed)
 
-  def build(node: RawNode, maxDepth: Int): Unit = {
-    val fanout = random.nextInt(10) + 1
+  def build(node: RawNode, maxDepth: Int, branching: Int): Unit = {
+    val fanout = random.nextInt(branching) + 1
 
     if (node.depth < maxDepth) {
       val children = for (i <- 0 to fanout) yield {
@@ -18,7 +18,7 @@ case class RawTreeBuilder(seed: Long) {
       node.children ++= children
     }
 
-    node.children foreach (n => build(n, maxDepth))
+    node.children foreach (n => build(n, maxDepth, branching))
   }
 
   def nodes(node: RawNode): Int = {

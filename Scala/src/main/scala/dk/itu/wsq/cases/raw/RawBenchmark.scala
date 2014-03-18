@@ -3,13 +3,13 @@ package dk.itu.wsq.cases.raw
 import dk.itu.wsq._
 import dk.itu.wsq.queue._
 
-case class RawBenchmark(workers: Int, depth: Int, queueImpl: QueueImplementation, seed: Long) extends Benchmark {
-  def name = s"Raw with $workers workers and a depth of $depth, using $queueImpl"
+case class RawBenchmark(workers: Int, depth: Int, branching: Int, seed: Long) extends Benchmark {
+  def name = s"Raw with $workers workers and a depth of $depth"
 
-  def run(): Double = {
+  def run(queueImpl: QueueImplementation): Double = {
     val builder = RawTreeBuilder(seed)
     val tree    = RawNode(0)
-    builder.build(tree, depth)
+    builder.build(tree, depth, branching)
     val total   = builder.nodes(tree)
 
     val wp = new RawWorkerPool(workers, queueImpl, total, seed)
@@ -18,4 +18,6 @@ case class RawBenchmark(workers: Int, depth: Int, queueImpl: QueueImplementation
     
     t
   }
+
+  def worksWith: Seq[QueueImplementation] = AllQueueImpls()
 }

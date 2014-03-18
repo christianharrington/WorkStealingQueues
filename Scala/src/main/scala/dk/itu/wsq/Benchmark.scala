@@ -11,12 +11,14 @@ trait Benchmark {
     (t, ret)
   }
 
-  def run(): Double
+  def run(queueImpl: QueueImplementation): Double
 
   def name: String
+
+  def worksWith: Seq[QueueImplementation]
 }
 
-object BenchmarkApp extends App {
+object BenchmarkApp extends App with QueueHelper {
   import dk.itu.wsq.cases.raw.RawBenchmark
   import dk.itu.wsq.cases.quicksort.QuickSortBenchmark
   import dk.itu.wsq.cases.spanningtree.SpanningTreeBenchmark
@@ -27,28 +29,28 @@ object BenchmarkApp extends App {
   val workers = 4
 
   val seed = Random.nextLong()
-
-  val benchmarks: List[QueueImplementation => Benchmark] = List(
-    q => QuickSortBenchmark(workers, 100000, q, seed),
-    q => SpanningTreeBenchmark(workers, 25000, 25, q, seed),
-    q => RawBenchmark(workers, 5, q, seed)
+  val benchmarks: Seq[Benchmark] = Seq(
+    QuickSortBenchmark(workers, 50000000, seed),
+    RawBenchmark(workers, 9, 8, seed),
+    SpanningTreeBenchmark(workers, 10000, 100, seed)
   )
+
+  System.in.read()
 
   println("Starting benchmarks")
 
   val results: Map[String, Seq[Double]] = (for (b <- benchmarks) yield {
-    for (q <- AllQueueImpls()) yield {
-      val bq = b(q)
+    for (q <- b.worksWith) yield {
       // Run the benchmark twice for fun
-      println(s"\nWarming up for ${bq.name}...")
-      bq.run()
-      bq.run()
+      println(s"\nWarming up for ${b.name} with $q...")
+      b.run(q)
+      b.run(q)
       println("Starting.")
 
-      val bs = bq.name -> (for (i <- 0 until tries) yield {
-        Thread.sleep(500)
+      val bs = s"${b.name} with $q" -> (for (i <- 0 until tries) yield {
+        //Thread.sleep(500)
         print(s"${i+1}/$tries ")
-        bq.run()
+        b.run(q)
       })
 
       println("\nDone")
@@ -58,15 +60,17 @@ object BenchmarkApp extends App {
 
   println("\nReport:")
 
-  results foreach { case (b, ts) =>
-    println(s"\n$b")
+  val keys = results.keys.toList.sorted
+
+  keys foreach { k =>
+    println(s"\n$k")
 
     print("Times: ")
-    ts.foreach { t =>
+    results(k).foreach { t =>
       print("%.2f ".format(t))
     }
 
-    val avg = ts.fold(0.0)((a, b) => a + b) / ts.length
+    val avg = results(k).fold(0.0)((a, b) => a + b) / results(k).length
 
     println("\nAvg: %.2f".format(avg))
   }

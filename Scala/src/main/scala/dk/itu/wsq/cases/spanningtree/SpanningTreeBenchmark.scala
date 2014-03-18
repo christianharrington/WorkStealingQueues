@@ -3,10 +3,10 @@ package dk.itu.wsq.cases.spanningtree
 import dk.itu.wsq._
 import dk.itu.wsq.queue._
 
-case class SpanningTreeBenchmark(workers: Int, nodes: Int, branchingFactor: Int, queueImpl: QueueImplementation, seed: Long) extends Benchmark {
-  def name = s"Spanning tree with $workers workers and graph with $nodes nodes and branching factor $branchingFactor, using $queueImpl"
+case class SpanningTreeBenchmark(workers: Int, nodes: Int, branchingFactor: Int, seed: Long) extends Benchmark {
+  def name = s"Spanning tree with $workers workers and graph with $nodes nodes and branching factor $branchingFactor"
 
-  def run(): Double = {
+  def run(queueImpl: QueueImplementation): Double = {
     val in = GraphBuilder(nodes, branchingFactor, seed)
     val wp = new SpanningTreeWorkerPool(workers, in.size, queueImpl)
 
@@ -14,4 +14,6 @@ case class SpanningTreeBenchmark(workers: Int, nodes: Int, branchingFactor: Int,
     
     t
   }
+
+  def worksWith: Seq[QueueImplementation] = AllQueueImpls()
 }
