@@ -24,4 +24,4 @@ org.scalastyle.sbt.ScalastylePlugin.Settings
 
 seq(com.github.retronym.SbtOneJar.oneJarSettings: _*)
 
-mainClass in oneJar := Some("dk.itu.wsq.Benchmark")
+mainClass in oneJar := Some("dk.itu.wsq.BenchmarkApp")
