@@ -8,7 +8,11 @@ class SpanningTreeWorkerPool(val workerNumber: Int, val graphSize: Int, val queu
     with QueueHelper {
 
   private val _workers = (for (i <- 0 until workerNumber) yield {
-    new SpanningTreeWorker(i, this, queueImplToQueue(queueImpl))
+    val q: WorkStealingQueue[SpanningTreeNode] = queueImpl match {
+      case ABPQueueImpl => new ABPQueue(graphSize)
+      case _            => queueImplToQueue(queueImpl)
+    }
+    new SpanningTreeWorker(i, this, q)
   }).toList
 
   private val _threads = for (w <- workers) yield {
