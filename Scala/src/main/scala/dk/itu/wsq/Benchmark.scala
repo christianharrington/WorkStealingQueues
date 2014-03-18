@@ -19,6 +19,7 @@ trait Benchmark {
 object BenchmarkApp extends App {
   import dk.itu.wsq.cases.raw.RawBenchmark
   import dk.itu.wsq.cases.quicksort.QuickSortBenchmark
+  import dk.itu.wsq.cases.spanningtree.SpanningTreeBenchmark
   import dk.itu.wsq.queue._
   import scala.util.Random
 
@@ -29,6 +30,7 @@ object BenchmarkApp extends App {
 
   val benchmarks: List[QueueImplementation => Benchmark] = List(
     q => QuickSortBenchmark(workers, 100000, q, seed),
+    q => SpanningTreeBenchmark(workers, 25000, 25, q, seed),
     q => RawBenchmark(workers, 5, q, seed)
   )
 

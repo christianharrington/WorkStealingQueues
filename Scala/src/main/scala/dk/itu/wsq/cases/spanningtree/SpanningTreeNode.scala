@@ -1,15 +1,23 @@
 package dk.itu.wsq.cases.spanningtree
 
 import dk.itu.wsq._
-import scala.collection.mutable.{ HashSet, Set }
+import scala.collection.immutable.HashSet
+import java.util.concurrent.atomic.AtomicBoolean
 
-case class SpanningTreeNode() extends Node {
+class SpanningTreeNode(val id: Int) extends Node {
 
-  private var color: Option[Int] = None
-  private var _hasVisitedAllNeighbors: Boolean = false
+  private var _color: Option[Int] = None
 
   private def adopt(child: SpanningTreeNode): Unit = {
     child.parent = Some(this)
+  }
+
+  var visited: AtomicBoolean = new AtomicBoolean(false)
+
+  def color = _color
+
+  def children: Set[SpanningTreeNode] = {    
+    neighbors filter { n => n.parent == Some(this) }
   }
 
   var neighbors: Set[SpanningTreeNode] = new HashSet[SpanningTreeNode]()
@@ -17,26 +25,32 @@ case class SpanningTreeNode() extends Node {
   var parent: Option[SpanningTreeNode] = None
 
   def paint(brush: Int): Unit = {
-    color = Some(brush)
+    _color = Some(brush)
   }
 
-  def hasVisitedAllNeighbors: Boolean = _hasVisitedAllNeighbors
+  def visit(worker: SpanningTreeWorker): Unit = {
+    if (visited.compareAndSet(false, true)) {
+      worker.visitCounter += 1
+    }
+    paint(worker.color)
+  }
 
   def traverse(worker: SpanningTreeWorker): Unit = {
-    if (!hasVisitedAllNeighbors) {
-      var neighborsColored = 0
-      for (n <- neighbors) { // BFS
-        if (n.color.isEmpty) {
-          n.paint(worker.color)
-
-          adopt(n)
-
-          worker.addToQueue(n)
-          neighborsColored += 1
-        }
+    visit(worker)
+    for (n <- neighbors) { // BFS
+      if (n.color.isEmpty) {
+        n.visit(worker)
+        adopt(n)
+        
+        worker.addToQueue(n)
       }
+    }
+  }
 
-      if (neighborsColored == 0) _hasVisitedAllNeighbors = true
+  override def equals(that: Any): Boolean = {
+    that match {
+      case other: SpanningTreeNode => this.id == other.id
+      case _ => false
     }
   }
   

@@ -9,14 +9,14 @@ class SpanningTreeWorker(val id: Int, val workerPool: SpanningTreeWorkerPool, pr
 
   val color = id
 
+  @volatile var visitCounter = 0
+
   def run(): Unit = {
-    while (workerPool.result.isEmpty) {
+    while (!workerPool.isFinished) {
       currentNode match {
         case Some(node) => {
-          execute(node) match {
-            case Some(root) => workerPool.result = Some(root)
-            case None       => currentNode = queue.take()
-          }
+          execute(node)
+          currentNode = queue.take()
         }
         case None       => {
           currentNode = workerPool.steal(id)
@@ -25,21 +25,8 @@ class SpanningTreeWorker(val id: Int, val workerPool: SpanningTreeWorkerPool, pr
     }
   }
 
-  def execute(node: SpanningTreeNode): Option[SpanningTreeNode] = {
-    node.paint(color)
+  def execute(node: SpanningTreeNode): Unit = {
     node.traverse(this)
-
-    if (node.hasVisitedAllNeighbors) {
-      node.parent match {
-        case Some(p) => { // Enqueue parent
-          queue.push(p)
-          None
-        }
-        case None => Some(node) // Node is root
-      }
-    } else {
-      None // Get more work
-    }
   }
 
   def addToQueue(node: SpanningTreeNode): Unit = queue.push(node)
