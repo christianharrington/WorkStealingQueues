@@ -45,17 +45,21 @@ trait WorkStealingQueue[E] {
 }
 
 trait QueueHelper {
-  def queueImplToQueue[E: Manifest](qi: QueueImplementation): WorkStealingQueue[E] = qi match {
-    case ABPQueueImpl                    => new ABPQueue[E](512)
-    case ChaseLevQueueImpl               => new ChaseLevQueue[E]()
-    case ChaseLevNaiveShrinkingQueueImpl => new ChaseLevNaiveShrinkingQueue[E]()
-    case IdempotentLIFOImpl              => new IdempotentLIFO[E]()
-    case IdempotentFIFOImpl              => new IdempotentFIFO[E]()
-    case IdempotentDEImpl                => new IdempotentDE[E]()
-    case DuplicatingQueueImpl            => new DuplicatingQueue[E](1000000)
+  def queueImplToQueue[E: Manifest](q: QueueImplementation): WorkStealingQueue[E] = {
+    q match {
+      case ABPQueueImpl                    => new ABPQueue[E](512)
+      case ChaseLevQueueImpl               => new ChaseLevQueue[E]()
+      case ChaseLevNaiveShrinkingQueueImpl => new ChaseLevNaiveShrinkingQueue[E]()
+      case IdempotentLIFOImpl              => new IdempotentLIFO[E]()
+      case IdempotentFIFOImpl              => new IdempotentFIFO[E]()
+      case IdempotentDEImpl                => new IdempotentDE[E]()
+      case DuplicatingQueueImpl            => new DuplicatingQueue[E](1000000)
+    }
   }
 
-  def runWithQueues[E: Manifest](qs: QueueImplementation*)(f: WorkStealingQueue[E] => Unit) : Unit = {
+  def runWithQueues[E: Manifest]
+    (qs: Seq[QueueImplementation])
+    (f: WorkStealingQueue[E] => Unit): Unit = {
     val queues = for (q <- qs) yield {
       queueImplToQueue(q)
     }
@@ -63,16 +67,28 @@ trait QueueHelper {
     queues foreach (q => f(q))
   }
 
-  def runWithEveryQueue[E: Manifest](f: WorkStealingQueue[E] => Unit): Unit = {
-    runWithQueues(AllQueueImpls(): _*)(f)
+  def runWithQueues[E: Manifest]
+    (qs: QueueImplementation*): WorkStealingQueue[E] => Unit = {
+    runWithQueues(qs: _*)
   }
 
-  def runWithQueueImpls[E: Manifest](qs: QueueImplementation*)(f: QueueImplementation => Unit) : Unit = {
+  def runWithEveryQueue[E: Manifest](f: WorkStealingQueue[E] => Unit): Unit = {
+    runWithQueues(AllQueueImpls())(f)
+  }
+
+    def runWithQueueImpls[E: Manifest]
+    (qs: Seq[QueueImplementation])
+    (f: QueueImplementation => Unit) : Unit = {
     qs foreach (q => f(q))
   }
 
+  def runWithQueueImpls[E: Manifest]
+    (qs: QueueImplementation*): QueueImplementation => Unit = {
+    runWithQueueImpls(qs: _*)
+  }
+
   def runWithEveryQueueImpl(f: QueueImplementation => Unit): Unit = {
-    runWithQueueImpls(AllQueueImpls(): _*)(f)
+    runWithQueueImpls(AllQueueImpls())(f)
   }
 
   def everyQueueExcept(qis: QueueImplementation*): Seq[QueueImplementation] = {

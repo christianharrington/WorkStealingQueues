@@ -5,29 +5,39 @@ import dk.itu.wsq.cases.quicksort._
 import dk.itu.wsq.queue._
 import scala.util.{ Random, Sorting }
 import org.scalatest._
+import org.scalatest.concurrent.Timeouts
+import org.scalatest.time.SpanSugar._
 
-class QuickSortTests extends FlatSpec with Matchers with QueueHelper {
-  "Sorting using QuickSort" should "sort" in runWithEveryQueueImpl { q: QueueImplementation =>
-    val l = 1000
+class QuickSortTests 
+  extends FlatSpec 
+  with Matchers 
+  with QueueHelper
+  with Timeouts {
 
-    val arr = Array.fill(l)(Random.nextInt(l))
+  "Sorting using QuickSort" should "sort" in runWithEveryQueueImpl { 
+    failAfter(5 seconds) { q: QueueImplementation =>
+      val l = 1000
 
-    val wp = new QuickSortWorkerPool(2, q)
-    
-    val result = wp.run(QuickSortNode(arr, Root()))
+      val arr = Array.fill(l)(Random.nextInt(l))
 
-    result match {
-      case Some(r) => {
-        for (i <- 0 until (l - 1)) {
-          assert(r(i) <= r(i + 1), s"Failed at index $i: ${r(i)}, ${r(i+1)}\n {$r}")
+      val wp = new QuickSortWorkerPool(2, q)
+      
+      val result = wp.run(QuickSortNode(arr, Root()))
+
+      result match {
+        case Some(r) => {
+          for (i <- 0 until (l - 1)) {
+            assert(r(i) <= r(i + 1), s"Failed at $i: ${r(i)}, ${r(i+1)}\n {$r}")
+          }
+          assert(r.length == l)
         }
-        assert(r.length == l)
+        case None => assert(false)
       }
-      case None => assert(false)
     }
   }
 
-  "The two halves from a divide plus the pivot " should "equal the length of the original array" in {
+  "The two halves from a divide plus the pivot " should 
+  "equal the length of the original array" in {
     val l = 10000
     val originalArr = Array.fill(l)(Random.nextInt(l))
 
