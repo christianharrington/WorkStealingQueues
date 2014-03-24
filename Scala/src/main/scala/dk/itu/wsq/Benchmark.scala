@@ -11,11 +11,11 @@ trait Benchmark {
     (t, ret)
   }
 
-  def run(queueImpl: QueueImplementation): Double
+  def run(queueImpl: QueueImpl): Double
 
   def name: String
 
-  def worksWith: Seq[QueueImplementation]
+  def worksWith: Seq[QueueImpl]
 }
 
 object BenchmarkApp extends App with QueueHelper {

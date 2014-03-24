@@ -15,7 +15,7 @@ class QuickSortTests
   with Timeouts {
 
   "Sorting using QuickSort" should "sort" in runWithEveryQueueImpl { 
-    failAfter(5 seconds) { q: QueueImplementation =>
+    failAfter(5 seconds) { q: QueueImpl =>
       val l = 1000
 
       val arr = Array.fill(l)(Random.nextInt(l))

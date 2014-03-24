@@ -1,30 +1,30 @@
 package dk.itu.wsq.queue
 
-sealed abstract class QueueImplementation
-object ABPQueueImpl extends QueueImplementation {
+sealed abstract class QueueImpl
+object ABPQueueImpl extends QueueImpl {
   override def toString(): String = "ABP Queue"
 }
-object ChaseLevQueueImpl extends QueueImplementation {
+object ChaseLevQueueImpl extends QueueImpl {
   override def toString(): String =  "Chase-Lev Queue" 
 }
-object ChaseLevNaiveShrinkingQueueImpl extends QueueImplementation {
+object ChaseLevNaiveShrinkingQueueImpl extends QueueImpl {
   override def toString(): String = "Chase-Lev Naive Shrinking Queue"
 }
-object IdempotentLIFOImpl extends QueueImplementation {
+object IdempotentLIFOImpl extends QueueImpl {
   override def toString(): String = "Idempotent Work Stealing Queue (LIFO)"
 }
-object IdempotentFIFOImpl extends QueueImplementation {
+object IdempotentFIFOImpl extends QueueImpl {
   override def toString(): String = "Idempotent Work Stealing Queue (FIFO)"
 }
-object IdempotentDEImpl extends QueueImplementation {
+object IdempotentDEImpl extends QueueImpl {
   override def toString(): String = "Idempotent Work Stealing Queue (Double-Ended)"
 }
-object DuplicatingQueueImpl extends QueueImplementation {
+object DuplicatingQueueImpl extends QueueImpl {
   override def toString(): String = "Duplicating Queue"
 }
 
 object AllQueueImpls {
-  def apply(): Seq[QueueImplementation] = Seq(
+  def apply(): Seq[QueueImpl] = Seq(
     ABPQueueImpl,
     ChaseLevQueueImpl,
     ChaseLevNaiveShrinkingQueueImpl,
@@ -45,7 +45,7 @@ trait WorkStealingQueue[E] {
 }
 
 trait QueueHelper {
-  def queueImplToQueue[E: Manifest](q: QueueImplementation): WorkStealingQueue[E] = {
+  def queueImplToQueue[E: Manifest](q: QueueImpl): WorkStealingQueue[E] = {
     q match {
       case ABPQueueImpl                    => new ABPQueue[E](512)
       case ChaseLevQueueImpl               => new ChaseLevQueue[E]()
@@ -58,7 +58,7 @@ trait QueueHelper {
   }
 
   def runWithQueues[E: Manifest]
-    (qs: Seq[QueueImplementation])
+    (qs: Seq[QueueImpl])
     (f: WorkStealingQueue[E] => Unit): Unit = {
     val queues = for (q <- qs) yield {
       queueImplToQueue(q)
@@ -68,7 +68,7 @@ trait QueueHelper {
   }
 
   def runWithQueues[E: Manifest]
-    (qs: QueueImplementation*): WorkStealingQueue[E] => Unit = {
+    (qs: QueueImpl*): WorkStealingQueue[E] => Unit = {
     runWithQueues(qs: _*)
   }
 
@@ -77,21 +77,21 @@ trait QueueHelper {
   }
 
     def runWithQueueImpls[E: Manifest]
-    (qs: Seq[QueueImplementation])
-    (f: QueueImplementation => Unit) : Unit = {
+    (qs: Seq[QueueImpl])
+    (f: QueueImpl => Unit) : Unit = {
     qs foreach (q => f(q))
   }
 
   def runWithQueueImpls[E: Manifest]
-    (qs: QueueImplementation*): QueueImplementation => Unit = {
+    (qs: QueueImpl*): QueueImpl => Unit = {
     runWithQueueImpls(qs: _*)
   }
 
-  def runWithEveryQueueImpl(f: QueueImplementation => Unit): Unit = {
+  def runWithEveryQueueImpl(f: QueueImpl => Unit): Unit = {
     runWithQueueImpls(AllQueueImpls())(f)
   }
 
-  def everyQueueExcept(qis: QueueImplementation*): Seq[QueueImplementation] = {
+  def everyQueueExcept(qis: QueueImpl*): Seq[QueueImpl] = {
     AllQueueImpls().filterNot(q => qis.contains(q))
   }
 }

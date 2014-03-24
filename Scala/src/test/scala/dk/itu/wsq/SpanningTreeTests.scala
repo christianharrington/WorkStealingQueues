@@ -48,7 +48,7 @@ class SpanningTreeTests
   }
 
   "Traversal of a graph" should "find a spanning tree" in runWithEveryQueueImpl {
-    failAfter(5 seconds) { q: QueueImplementation =>
+    failAfter(5 seconds) { q: QueueImpl =>
       val size = 10000
       val maxNumberOfNeighbors = 20
       val printGraph = false
