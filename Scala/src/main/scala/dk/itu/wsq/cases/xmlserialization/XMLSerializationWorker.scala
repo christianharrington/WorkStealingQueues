@@ -33,8 +33,7 @@ class XMLSerializationWorker(val id:Int, val workerPool: XMLSerializationWorkerP
       node.parent match {
         case None => node.stringValue
         case Some(parent) => {
-          node.notifyParent()
-          enqueue(parent)
+          if (parent.readyToSerialize) enqueue(parent)
 
           None
         }

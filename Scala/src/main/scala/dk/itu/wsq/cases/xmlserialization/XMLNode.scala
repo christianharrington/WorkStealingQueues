@@ -2,15 +2,14 @@ package dk.itu.wsq.cases.xmlserialization
 
 import dk.itu.wsq._
 import scala.collection.mutable.StringBuilder
-import scala.collection.immutable.HashSet
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicInteger
 import scala.xml.{ Elem, Node }
 
 class XMLNode(val elem: Node, val parent: Option[XMLNode]) extends dk.itu.wsq.Node {
 
   var children: Seq[XMLNode] = Seq()
 
-  var processedChildren: AtomicReference[Set[XMLNode]] = new AtomicReference(new HashSet[XMLNode]())
+  var processedChildren: AtomicInteger = new AtomicInteger(0)
 
   var stringValue: Option[String] = None
 
@@ -21,27 +20,27 @@ class XMLNode(val elem: Node, val parent: Option[XMLNode]) extends dk.itu.wsq.No
   }
 
   def serialize: Option[String] = {
-    if (processedChildren.get.size == elem.child.length) {
+    if (processedChildren.get == elem.child.length) {
       elem match {
         case el: Elem => {
           val builder: StringBuilder = new StringBuilder()
           val prefix = if (el.prefix != null) el.prefix + ":" else "" 
           val label = el.label
           val attributes = el.attributes.mkString(" ")
-          val headerClose = if (el.child.isEmpty) "/>\n" else ">\n"
+          val headerClose = if (el.child.isEmpty) "/>" else ">"
 
-          builder += '<' ++= prefix ++= label += ' ' ++= attributes ++= headerClose
+          builder += '<' ++= prefix ++= label ++= attributes ++= headerClose
 
           var failure = false
 
           for (child <- children) {
             child.stringValue match {
-              case Some(s) => builder ++= s += '\n'
+              case Some(s) => builder ++= s
               case None    => failure = true
             }
           }
 
-          builder ++= "</" ++= label ++= ">\n"
+          builder ++= "</" ++= label ++= ">"
           if (!failure) stringValue = Some(builder.toString)
 
           stringValue
@@ -55,11 +54,8 @@ class XMLNode(val elem: Node, val parent: Option[XMLNode]) extends dk.itu.wsq.No
     } else None
   }
 
-  def notifyParent(): Unit = {
-    parent match {
-      case Some(p) => p.processedChildren.set(p.processedChildren.get + this)
-      case None    => ()
-    }
+  def readyToSerialize(): Boolean = {
+    processedChildren.incrementAndGet() == elem.child.length
   }
 
 }
