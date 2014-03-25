@@ -1,13 +1,15 @@
 package dk.itu.wsq.queue
 
 class DuplicatingQueue[E: Manifest](val size: Int) extends WorkStealingQueue[E] {
+  import scala.annotation.tailrec
 
-  private var tasks: Array[Option[E]] = new Array[Option[E]](size)
+  private val tasks: Array[Option[E]] = new Array[Option[E]](size)
   @volatile private var head: Int = 0
   @volatile private var tail: Int = 0
   private var tailMin = Integer.MAX_VALUE
 
-  def push(e: E): Unit = {
+  @tailrec
+  final def push(e: E): Unit = {
     if(tail < (Math.min(tailMin, head) + size) && tail < Integer.MAX_VALUE/2) {
       tasks(tail % size) = Some(e)
       tail += 1
@@ -27,7 +29,7 @@ class DuplicatingQueue[E: Manifest](val size: Int) extends WorkStealingQueue[E] 
     }
   }
 
-  def take(): Option[E] = {
+  final def take(): Option[E] = {
     tail -= 1
     if(head <= Math.min(tailMin, tail)) {
       if(tailMin > tail) {
@@ -54,7 +56,7 @@ class DuplicatingQueue[E: Manifest](val size: Int) extends WorkStealingQueue[E] 
     }
   }
 
-  def steal(): Option[E] = {
+  final def steal(): Option[E] = {
     this.synchronized {
       if(head < tail) {
         val task = tasks(head % size)
@@ -66,5 +68,5 @@ class DuplicatingQueue[E: Manifest](val size: Int) extends WorkStealingQueue[E] 
     }
   }
 
-  def length: Int = tail - head
+  final def length: Int = tail - head
 }

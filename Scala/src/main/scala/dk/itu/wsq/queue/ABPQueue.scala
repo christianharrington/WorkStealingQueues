@@ -4,25 +4,25 @@ import java.util.concurrent.atomic._
 
 case class Tag(val value: Int) extends AnyVal
 
-case class Age(val tag: Tag, val top: Int) {
-  override def equals(that: Any) = that match {
-    case t: Age => tag == t.tag && top == t.top
-    case _      => false
-  }
-}
-
 class ABPQueue[E](val size: Int) extends WorkStealingQueue[E] {
+  case class Age(val tag: Tag, val top: Int) {
+    override def equals(that: Any) = that match {
+      case t: Age => tag == t.tag && top == t.top
+      case _      => false
+    }
+  }
+
   private val age = new AtomicReference[Age](Age(Tag(0), 0))
   private var bottom: Int = 0
   private val queue = new AtomicReferenceArray[E](size)
 
-  def push(v: E): Unit = {
+  final def push(v: E): Unit = {
     val localBot = bottom
     queue.set(localBot, v)
     bottom = localBot + 1
   }
 
-  def take(): Option[E] = {
+  final def take(): Option[E] = {
     val oldBottom = bottom
 
     if (oldBottom == 0) {
@@ -58,7 +58,7 @@ class ABPQueue[E](val size: Int) extends WorkStealingQueue[E] {
     }
   }
 
-  def steal(): Option[E] = {
+  final def steal(): Option[E] = {
     val oldAge = age.get
     val localBot = bottom
 
@@ -78,5 +78,5 @@ class ABPQueue[E](val size: Int) extends WorkStealingQueue[E] {
     }
   }
 
-  def length = bottom - age.get.top
+  final def length = bottom - age.get.top
 }

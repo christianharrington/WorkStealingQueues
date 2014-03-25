@@ -1,16 +1,17 @@
 package dk.itu.wsq.queue
 
 class IdempotentLIFO[E: Manifest] extends WorkStealingQueue[E] {
-
   import java.util.concurrent.atomic._
+  import scala.annotation.tailrec
 
   case class Anchor(tail: Int, tag: Int)
 
-  private var anchor: AtomicReference[Anchor] = new AtomicReference[Anchor](Anchor(0, 0)) // (tail, tag)
+  private val anchor: AtomicReference[Anchor] = new AtomicReference[Anchor](Anchor(0, 0)) // (tail, tag)
   private var capacity: Int = 1
   private var tasks: Array[E] = new Array[E](capacity)
 
-	def push(e: E): Unit = {    
+  @tailrec
+	final def push(e: E): Unit = {    
     val localAnchor = anchor.get()
 
     if(localAnchor.tail == capacity) {
@@ -24,7 +25,7 @@ class IdempotentLIFO[E: Manifest] extends WorkStealingQueue[E] {
     }
   }
 
-	def take(): Option[E] = {    
+	final def take(): Option[E] = {    
     val localAnchor = anchor.get()
 
     if(localAnchor.tail == 0) {
@@ -36,23 +37,24 @@ class IdempotentLIFO[E: Manifest] extends WorkStealingQueue[E] {
     }
   }
 
-  def steal(): Option[E] = {
-    while(true) {
-      var localAnchor = anchor.get()
-      if(localAnchor.tail == 0) {
-        return None
-      } else {
-        val arr = tasks
-        var task = arr(localAnchor.tail - 1)
-        if(anchor.compareAndSet(localAnchor, Anchor(localAnchor.tail - 1, localAnchor.tag))) {
-          return Some(task)
-        }
+  @tailrec
+  final def steal(): Option[E] = {
+    val localAnchor = anchor.get()
+    if(localAnchor.tail == 0) {
+      None
+    } else {
+      val arr = tasks
+      val task = arr(localAnchor.tail - 1)
+      if(anchor.compareAndSet(localAnchor, Anchor(localAnchor.tail - 1, localAnchor.tag))) {
+        Some(task)
       }
-    } 
-    None
+      else {
+        steal()
+      }
+    }
   }
 
-  def expand(): Unit = {
+  final private def expand(): Unit = {
     val newCapacity = capacity * 2
     val arr = new Array[E](newCapacity)
 
@@ -62,5 +64,5 @@ class IdempotentLIFO[E: Manifest] extends WorkStealingQueue[E] {
     capacity = newCapacity
   }
 
-  def length: Int = anchor.get().tail
+  final def length: Int = anchor.get().tail
 }
