@@ -3,6 +3,16 @@ package dk.itu.wsq.cases.quicksort
 import dk.itu.wsq._
 import dk.itu.wsq.queue._
 
+object QuickSortBenchmark {
+  import com.typesafe.config._
+
+  def apply(workers: Int, seed: Long, conf: Config): Benchmark = {
+    val length = conf.getInt("benchmarks.quicksort.length")
+
+    QuickSortBenchmark(workers, length, seed)
+  }
+}
+
 case class QuickSortBenchmark(workers: Int, length: Int, seed: Long)
   extends Benchmark with QueueHelper {
 

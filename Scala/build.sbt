@@ -15,7 +15,8 @@ scalacOptions += "-Xfatal-warnings"
 resolvers ++= Seq()
  
 libraryDependencies ++= Seq(
-  "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
+  "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
+  "com.typesafe" % "config" % "1.2.0"
 )
 
 testOptions in Test += Tests.Argument("-oD")

@@ -3,6 +3,8 @@ package dk.itu.wsq
 import dk.itu.wsq.queue._
 
 trait Benchmark {
+  import com.typesafe.config.Config
+
   def time[A](f: => A) = {
     val s = System.nanoTime
     val ret = f
@@ -19,20 +21,27 @@ trait Benchmark {
 }
 
 object BenchmarkApp extends App with QueueHelper {
-  import dk.itu.wsq.cases.raw.RawBenchmark
+  import com.typesafe.config._
   import dk.itu.wsq.cases.quicksort.QuickSortBenchmark
+  import dk.itu.wsq.cases.raw.RawBenchmark
   import dk.itu.wsq.cases.spanningtree.SpanningTreeBenchmark
   import dk.itu.wsq.queue._
   import scala.util.Random
 
-  val tries = 10
-  val workers = 4
+  private val conf = ConfigFactory.load()
 
-  val seed = Random.nextLong()
+  val tries   = conf.getInt("benchmarks.tries")
+  val workers = conf.getInt("benchmarks.workers")
+  val seed    = if (conf.getBoolean("benchmarks.randomSeed")) {
+    scala.util.Random.nextLong()
+  } else {
+    conf.getLong("benchmarks.seed")
+  }
+
   val benchmarks: Seq[Benchmark] = Seq(
-    QuickSortBenchmark(workers, 5000000, seed),
-    RawBenchmark(workers, 9, 6, seed),
-    SpanningTreeBenchmark(workers, 100000, 100, seed)
+    QuickSortBenchmark(workers, seed, conf),
+    RawBenchmark(workers, seed, conf),
+    SpanningTreeBenchmark(workers, seed, conf)
   )
 
   System.in.read()

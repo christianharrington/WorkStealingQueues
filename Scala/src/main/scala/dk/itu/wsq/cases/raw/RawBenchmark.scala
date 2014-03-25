@@ -3,6 +3,17 @@ package dk.itu.wsq.cases.raw
 import dk.itu.wsq._
 import dk.itu.wsq.queue._
 
+object RawBenchmark {
+  import com.typesafe.config._
+
+  def apply(workers: Int, seed: Long, conf: Config): Benchmark = {
+    val depth = conf.getInt("benchmarks.raw.depth")
+    val branching = conf.getInt("benchmarks.raw.branching")
+
+    RawBenchmark(workers, depth, branching, seed)
+  }
+}
+
 case class RawBenchmark(workers: Int, depth: Int, branching: Int, seed: Long)
   extends Benchmark {
 
