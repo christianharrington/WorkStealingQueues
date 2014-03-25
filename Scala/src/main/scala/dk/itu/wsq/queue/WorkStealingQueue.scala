@@ -1,5 +1,16 @@
 package dk.itu.wsq.queue
 
+object `package` {
+  val allQueueImpls = Seq(
+    ABPQueueImpl,
+    ChaseLevQueueImpl,
+    ChaseLevNaiveShrinkingQueueImpl,
+    IdempotentLIFOImpl,
+    IdempotentFIFOImpl,
+    IdempotentDEImpl,
+    DuplicatingQueueImpl)
+}
+
 sealed abstract class QueueImpl
 object ABPQueueImpl extends QueueImpl {
   override def toString(): String = "ABP Queue"
@@ -21,17 +32,6 @@ object IdempotentDEImpl extends QueueImpl {
 }
 object DuplicatingQueueImpl extends QueueImpl {
   override def toString(): String = "Duplicating Queue"
-}
-
-object AllQueueImpls {
-  def apply(): Seq[QueueImpl] = Seq(
-    ABPQueueImpl,
-    ChaseLevQueueImpl,
-    ChaseLevNaiveShrinkingQueueImpl,
-    IdempotentLIFOImpl,
-    IdempotentFIFOImpl,
-    IdempotentDEImpl,
-    DuplicatingQueueImpl)
 }
 
 trait WorkStealingQueue[E] {
@@ -73,7 +73,7 @@ trait QueueHelper {
   }
 
   def runWithEveryQueue[E: Manifest](f: WorkStealingQueue[E] => Unit): Unit = {
-    runWithQueues(AllQueueImpls())(f)
+    runWithQueues(allQueueImpls)(f)
   }
 
     def runWithQueueImpls[E: Manifest]
@@ -88,10 +88,10 @@ trait QueueHelper {
   }
 
   def runWithEveryQueueImpl(f: QueueImpl => Unit): Unit = {
-    runWithQueueImpls(AllQueueImpls())(f)
+    runWithQueueImpls(allQueueImpls)(f)
   }
 
   def everyQueueExcept(qis: QueueImpl*): Seq[QueueImpl] = {
-    AllQueueImpls().filterNot(q => qis.contains(q))
+    allQueueImpls.filterNot(q => qis.contains(q))
   }
 }

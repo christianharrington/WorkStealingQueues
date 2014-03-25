@@ -21,5 +21,5 @@ case class RawBenchmark(workers: Int, depth: Int, branching: Int, seed: Long)
     t
   }
 
-  def worksWith: Seq[QueueImpl] = AllQueueImpls()
+  def worksWith: Seq[QueueImpl] = allQueueImpls
 }

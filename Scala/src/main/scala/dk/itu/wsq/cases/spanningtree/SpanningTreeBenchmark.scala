@@ -17,5 +17,5 @@ case class SpanningTreeBenchmark(workers: Int, nodes: Int, branching: Int, seed:
     t
   }
 
-  def worksWith: Seq[QueueImpl] = AllQueueImpls()
+  def worksWith: Seq[QueueImpl] = allQueueImpls
 }
