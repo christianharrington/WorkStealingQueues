@@ -38,7 +38,7 @@ object GraphBuilder {
   }
 
   private def resetGraph(nodes: Set[SpanningTreeNode]) = {
-    nodes.par.foreach(n => n.reset())
+    nodes.foreach(n => n.reset())
     nodes
   }
 

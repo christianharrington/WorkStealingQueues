@@ -1,11 +1,10 @@
 package dk.itu.wsq.cases.spanningtree
 
 import dk.itu.wsq._
-import scala.collection.immutable.HashSet
+import scala.collection.mutable
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SpanningTreeNode(val id: Int) extends Node {
-
+case class SpanningTreeNode(val id: Int) extends Node {
   private var _color: Option[Int] = None
 
   private def adopt(child: SpanningTreeNode): Unit = {
@@ -16,11 +15,11 @@ class SpanningTreeNode(val id: Int) extends Node {
 
   def color = _color
 
-  def children: Set[SpanningTreeNode] = {    
+  def children: mutable.HashSet[SpanningTreeNode] = {    
     neighbors filter { n => n.parent == Some(this) }
   }
 
-  var neighbors: Set[SpanningTreeNode] = new HashSet[SpanningTreeNode]()
+  val neighbors: mutable.HashSet[SpanningTreeNode] = mutable.HashSet[SpanningTreeNode]()
 
   var parent: Option[SpanningTreeNode] = None
 
