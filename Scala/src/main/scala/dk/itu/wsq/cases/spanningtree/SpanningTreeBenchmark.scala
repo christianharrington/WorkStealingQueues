@@ -17,10 +17,18 @@ object SpanningTreeBenchmark {
 case class SpanningTreeBenchmark(workers: Int, nodes: Int, branching: Int, seed: Long)
   extends Benchmark {
 
+  private val in = GraphBuilder(nodes, branching, seed)
+
+  private def resetGraph(nodes: Set[SpanningTreeNode]) = {
+    nodes.foreach(n => n.reset())
+    nodes
+  }
+
   def name = s"Spanning tree with $workers workers and graph with $nodes nodes and branching factor $branching"
 
   def run(queueImpl: QueueImpl): Double = {
-    val in = GraphBuilder(nodes, branching, seed)
+    resetGraph(in)
+
     val wp = new SpanningTreeWorkerPool(workers, in.size, queueImpl)
 
     val (t, _) = time(wp.run(in.head))

@@ -2,9 +2,6 @@ package dk.itu.wsq.cases.spanningtree
 
 object GraphBuilder {
   import scala.util.Random
-  import scala.collection.mutable
-
-  private val graphCache = mutable.Map[Long, Set[SpanningTreeNode]]()
 
   private def randomNeighbor(thisNode: Int, nodes: IndexedSeq[SpanningTreeNode], random: Random): SpanningTreeNode = {
     val nextNeighbour = random.nextInt(nodes.length)
@@ -32,9 +29,7 @@ object GraphBuilder {
       }
     }
 
-    val n = nodes.toSet
-    graphCache += seed -> n
-    n
+    nodes.toSet
   }
 
   private def resetGraph(nodes: Set[SpanningTreeNode]) = {
@@ -43,11 +38,9 @@ object GraphBuilder {
   }
 
   def apply(numberOfNodes: Int, maxNumberOfNeighbors: Int, seed: Long): Set[SpanningTreeNode] = {
-    if (graphCache.contains(seed)) {
-      resetGraph(graphCache(seed))
-    }
-    else {
-      buildGraph(numberOfNodes, maxNumberOfNeighbors, seed)
-    }
+    print("SpanningTree: Building graph... ")
+    val g = buildGraph(numberOfNodes, maxNumberOfNeighbors, seed)
+    println("Done.")
+    g
   }
 }

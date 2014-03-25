@@ -30,6 +30,7 @@ object BenchmarkApp extends App with QueueHelper {
 
   private val conf = ConfigFactory.load()
 
+  print("Loading config... ")
   val tries   = conf.getInt("benchmarks.tries")
   val workers = conf.getInt("benchmarks.workers")
   val seed    = if (conf.getBoolean("benchmarks.randomSeed")) {
@@ -37,14 +38,21 @@ object BenchmarkApp extends App with QueueHelper {
   } else {
     conf.getLong("benchmarks.seed")
   }
+  val waitForInput = conf.getBoolean("benchmarks.wait")
+  println("Done.")
 
+  println("Loading benchmarks... ")
   val benchmarks: Seq[Benchmark] = Seq(
     QuickSortBenchmark(workers, seed, conf),
     RawBenchmark(workers, seed, conf),
     SpanningTreeBenchmark(workers, seed, conf)
   )
+  println("Done.")
 
-  System.in.read()
+  if (waitForInput) {
+    println("Hit enter to start")
+    System.in.read()
+  }
 
   println("Starting benchmarks")
 
