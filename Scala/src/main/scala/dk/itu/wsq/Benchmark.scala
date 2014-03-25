@@ -25,6 +25,7 @@ object BenchmarkApp extends App with QueueHelper {
   import dk.itu.wsq.cases.quicksort.QuickSortBenchmark
   import dk.itu.wsq.cases.raw.RawBenchmark
   import dk.itu.wsq.cases.spanningtree.SpanningTreeBenchmark
+  import dk.itu.wsq.cases.xmlserialization.XMLSerializationBenchmark
   import dk.itu.wsq.queue._
   import scala.util.Random
 
@@ -43,9 +44,10 @@ object BenchmarkApp extends App with QueueHelper {
 
   println("Loading benchmarks... ")
   val benchmarks: Seq[Benchmark] = Seq(
-    QuickSortBenchmark(workers, seed, conf),
-    RawBenchmark(workers, seed, conf),
-    SpanningTreeBenchmark(workers, seed, conf)
+    //QuickSortBenchmark(workers, seed, conf),
+    //RawBenchmark(workers, seed, conf),
+    //SpanningTreeBenchmark(workers, seed, conf),
+    XMLSerializationBenchmark(workers, seed, conf)
   )
   println("Done.")
 

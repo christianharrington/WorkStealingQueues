@@ -13,18 +13,23 @@ with Matchers
 with QueueHelper
 with Timeouts {
 
-  "Traversing a graph of XMLNodes" should "serialize to a correct XML output" in failAfter(5 seconds) {
-    runWithQueueImpls(everyQueueExcept(ABPQueueImpl, IdempotentLIFOImpl, IdempotentFIFOImpl, IdempotentDEImpl)) { q: QueueImpl =>  
-      val booksElem = scala.xml.XML.loadFile("src/test/resources/books.xml")
+  "Traversing a graph of XMLNodes" should "serialize to a correct XML output" in failAfter(10000 seconds) {
+    runWithQueueImpls(everyQueueExcept(idempotentQueueImpls: _*)) { q: QueueImpl =>  
+      val seed = 3012125
+      val depth = 6
+      val maxNoOfChildren = 10
+      val noOfAttributes = 5
+      val inputXML = XMLGenerator(seed, depth, maxNoOfChildren, noOfAttributes)
 
       val workerPool = new XMLSerializationWorkerPool(4, q)
 
-      val result = workerPool.run(new XMLNode(booksElem, None))
-
+      val result = workerPool.run(new XMLNode(inputXML, None))
+      //println("Input:\n" + inputXML)
       result match {
         case Some(r) => {
           val resultXML = scala.xml.XML.loadString(r)
-          assert(resultXML == booksElem, "BAD XML")
+          //println(r)
+          assert(r == inputXML.toString, "BAD XML")
         }
         case None => assert(false, "Result missing")
       }

@@ -7,8 +7,13 @@ object `package` {
     ChaseLevNaiveShrinkingQueueImpl,
     IdempotentLIFOImpl,
     IdempotentFIFOImpl,
-    IdempotentDEImpl,
-    DuplicatingQueueImpl)
+    IdempotentDEImpl)
+    //DuplicatingQueueImpl)
+
+  val idempotentQueueImpls = Seq(
+    IdempotentLIFOImpl,
+    IdempotentFIFOImpl,
+    IdempotentDEImpl)
 }
 
 sealed abstract class QueueImpl
@@ -53,7 +58,7 @@ trait QueueHelper {
       case IdempotentLIFOImpl              => new IdempotentLIFO[E]()
       case IdempotentFIFOImpl              => new IdempotentFIFO[E]()
       case IdempotentDEImpl                => new IdempotentDE[E]()
-      case DuplicatingQueueImpl            => new DuplicatingQueue[E](1000000)
+      case DuplicatingQueueImpl            => new DuplicatingQueue[E](512)
     }
   }
 
@@ -76,7 +81,7 @@ trait QueueHelper {
     runWithQueues(allQueueImpls)(f)
   }
 
-    def runWithQueueImpls[E: Manifest]
+  def runWithQueueImpls[E: Manifest]
     (qs: Seq[QueueImpl])
     (f: QueueImpl => Unit) : Unit = {
     qs foreach (q => f(q))
