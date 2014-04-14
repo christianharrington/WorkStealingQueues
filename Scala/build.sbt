@@ -17,7 +17,7 @@ resolvers ++= Seq()
 libraryDependencies ++= Seq(
   "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
   "com.typesafe" % "config" % "1.2.0",
-  "org.multiverse" % "multiverse-core" % "0.7.0"
+  "org.scala-stm" %% "scala-stm" % "0.7"
 )
 
 testOptions in Test += Tests.Argument("-oD")
