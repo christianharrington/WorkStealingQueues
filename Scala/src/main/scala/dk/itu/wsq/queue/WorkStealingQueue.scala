@@ -1,19 +1,24 @@
 package dk.itu.wsq.queue
 
+import dk.itu.wsq.queue.stm._
+
 object `package` {
   val allQueueImpls = Seq(
     ABPQueueImpl,
     ChaseLevQueueImpl,
     ChaseLevNaiveShrinkingQueueImpl,
+    ChaseLevSTMQueueImpl,
+    ChaseLevNaiveShrinkingSTMQueueImpl,
     IdempotentLIFOImpl,
     IdempotentFIFOImpl,
-    IdempotentDEImpl)
-    //DuplicatingQueueImpl)
+    IdempotentDEImpl,
+    DuplicatingQueueImpl)
 
   val idempotentQueueImpls = Seq(
     IdempotentLIFOImpl,
     IdempotentFIFOImpl,
-    IdempotentDEImpl)
+    IdempotentDEImpl,
+    DuplicatingQueueImpl)
 }
 
 sealed abstract class QueueImpl
@@ -25,6 +30,12 @@ object ChaseLevQueueImpl extends QueueImpl {
 }
 object ChaseLevNaiveShrinkingQueueImpl extends QueueImpl {
   override def toString(): String = "Chase-Lev Naive Shrinking Queue"
+}
+object ChaseLevSTMQueueImpl extends QueueImpl {
+  override def toString(): String = "Chase-Lev STM Queue"
+}
+object ChaseLevNaiveShrinkingSTMQueueImpl extends QueueImpl {
+  override def toString(): String = "Chase-Lev Naive Shrinking STM Queue"
 }
 object IdempotentLIFOImpl extends QueueImpl {
   override def toString(): String = "Idempotent Work Stealing Queue (LIFO)"
@@ -52,13 +63,15 @@ trait WorkStealingQueue[E] {
 trait QueueHelper {
   def queueImplToQueue[E: Manifest](q: QueueImpl): WorkStealingQueue[E] = {
     q match {
-      case ABPQueueImpl                    => new ABPQueue[E](512)
-      case ChaseLevQueueImpl               => new ChaseLevQueue[E]()
-      case ChaseLevNaiveShrinkingQueueImpl => new ChaseLevNaiveShrinkingQueue[E]()
-      case IdempotentLIFOImpl              => new IdempotentLIFO[E]()
-      case IdempotentFIFOImpl              => new IdempotentFIFO[E]()
-      case IdempotentDEImpl                => new IdempotentDE[E]()
-      case DuplicatingQueueImpl            => new DuplicatingQueue[E](512)
+      case ABPQueueImpl                       => new ABPQueue[E](512)
+      case ChaseLevQueueImpl                  => new ChaseLevQueue[E]()
+      case ChaseLevNaiveShrinkingQueueImpl    => new ChaseLevNaiveShrinkingQueue[E]()
+      case ChaseLevSTMQueueImpl               => new ChaseLevSTMQueue[E]()
+      case ChaseLevNaiveShrinkingSTMQueueImpl => new ChaseLevNaiveShrinkingSTMQueue[E]()
+      case IdempotentLIFOImpl                 => new IdempotentLIFO[E]()
+      case IdempotentFIFOImpl                 => new IdempotentFIFO[E]()
+      case IdempotentDEImpl                   => new IdempotentDE[E]()
+      case DuplicatingQueueImpl               => new DuplicatingQueue[E](512)
     }
   }
 

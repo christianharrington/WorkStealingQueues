@@ -14,7 +14,7 @@ class QuickSortTests
   with QueueHelper
   with Timeouts {
 
-  "Sorting using QuickSort" should "sort" in runWithEveryQueueImpl { 
+  "Sorting using QuickSort" should "sort" in runWithQueueImpls(everyQueueExcept(idempotentQueueImpls: _*)) { 
     failAfter(5 seconds) { q: QueueImpl =>
       val l = 1000
 
