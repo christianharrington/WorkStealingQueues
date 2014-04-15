@@ -37,4 +37,6 @@ case class SpanningTreeBenchmark(workers: Int, nodes: Int, branching: Int, seed:
   }
 
   def worksWith: Seq[QueueImpl] = allQueueImpls
+
+  override def toString(): String = "Spanning Tree" 
 }
