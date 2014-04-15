@@ -23,6 +23,6 @@ case class RawTreeBuilder(seed: Long) {
 
   def nodes(node: RawNode): Int = {
     if (node.children.size == 0) 1
-    else node.children.foldLeft(0)((t, n) => t + nodes(n))
+    else node.children.foldLeft(1)((t, n) => t + nodes(n))
   }
 }
