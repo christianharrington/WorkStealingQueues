@@ -33,4 +33,6 @@ case class XMLSerializationBenchmark(workers: Int, depth: Int, children: Int, at
   }
 
   def worksWith: Seq[QueueImpl] = everyQueueExcept(idempotentQueueImpls: _*)
+
+  override def toString(): String = "XML" 
 }

@@ -36,4 +36,6 @@ case class QuickSortBenchmark(workers: Int, length: Int, seed: Long)
       IdempotentDEImpl, 
       DuplicatingQueueImpl)
   }
+
+  override def toString(): String = "Quick sort" 
 }

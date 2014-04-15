@@ -27,7 +27,11 @@ object BenchmarkApp extends App with QueueHelper {
   import dk.itu.wsq.cases.spanningtree.SpanningTreeBenchmark
   import dk.itu.wsq.cases.xmlserialization.XMLSerializationBenchmark
   import dk.itu.wsq.queue._
+  import java.io._
   import scala.util.Random
+
+  type Times   = Map[QueueImpl, Seq[Double]]
+  type Results = Map[Benchmark, Times]
 
   private val conf = ConfigFactory.load()
 
@@ -40,13 +44,16 @@ object BenchmarkApp extends App with QueueHelper {
     conf.getLong("benchmarks.seed")
   }
   val waitForInput = conf.getBoolean("benchmarks.wait")
+
+  val log          = conf.getBoolean("benchmarks.log")
+  val logDir       = conf.getString("benchmarks.logDir")
   println("Done.")
 
   println("Loading benchmarks... ")
   val benchmarks: Seq[Benchmark] = Seq(
-    //QuickSortBenchmark(workers, seed, conf),
-    //RawBenchmark(workers, seed, conf),
-    //SpanningTreeBenchmark(workers, seed, conf),
+    QuickSortBenchmark(workers, seed, conf),
+    RawBenchmark(workers, seed, conf),
+    SpanningTreeBenchmark(workers, seed, conf),
     XMLSerializationBenchmark(workers, seed, conf)
   )
   println("Done.")
@@ -58,39 +65,120 @@ object BenchmarkApp extends App with QueueHelper {
 
   println("Starting benchmarks")
 
-  val results: Map[String, Seq[Double]] = (for (b <- benchmarks) yield {
-    for (q <- b.worksWith) yield {
-      // Run the benchmark twice for fun
-      println(s"\nWarming up for ${b.name} with $q...")
-      b.run(q)
-      b.run(q)
-      println("Starting.")
-
-      val bs = s"${b.name} with $q" -> (for (i <- 0 until tries) yield {
-        //Thread.sleep(500)
-        print(s"${i+1}/$tries ")
-        b.run(q)
-      })
-
-      println("\nDone")
-      bs
-    }
-  }).flatten.toMap
+  val results = runBenchmarks
 
   println("\nReport:")
+  println(report(results))
 
-  val keys = results.keys.toList.sorted
+  if (log) {
+    val f = new File(logDir)
+    f.mkdirs()
+    logAverages()
+    logTimes()
+  }
 
-  keys foreach { k =>
-    println(s"\n$k")
+  def logAverages(): Unit = {
+    val path = s"$logDir/averages.csv"
+    println(s"Writing avereages to $path")
+    val writer = new BufferedWriter(new FileWriter(path))
+    writer.write(averagesAsCSV(results))
+    writer.close()
+  }
 
-    print("Times: ")
-    results(k).foreach { t =>
-      print("%.2f ".format(t))
+  def logTimes(): Unit = {
+    for (b <- benchmarks) {
+      val path = s"$logDir/$b.csv"
+      println(s"Writing times for $b to $path")
+      val writer = new BufferedWriter(new FileWriter(path))
+      writer.write(timesAsCSV(b, results(b)) + "\n")
+      writer.close()
+    }
+  }
+
+  def runBenchmarks: Results = {
+    (for (benchmark <- benchmarks) yield {
+      val queues = for (queue <- benchmark.worksWith) yield {
+        // Run the benchmark twice for fun
+        println(s"\nWarming up for ${benchmark.name} with $queue...")
+        benchmark.run(queue)
+        benchmark.run(queue)
+        println("Starting.")
+
+        val bs = queue -> (for (i <- 0 until tries) yield {
+          print(s"${i+1}/$tries ")
+          benchmark.run(queue)
+        })
+
+        println("\nDone")
+        bs
+      }
+
+      benchmark -> queues.toMap
+    }).toMap
+  }
+
+  def report(results: Results): String = {
+    val str = new StringBuilder()
+
+    results.keys foreach { benchmark => 
+      results(benchmark) foreach { case (queue, times) => 
+        str ++= s"\n${benchmark.name} with $queue\n"
+
+        str ++= "Times: "
+        times.foreach { t =>
+          str ++= "%.2f ".format(t)
+        }
+
+        val avg = times.fold(0.0)((a, b) => a + b) / times.length
+
+        str ++= "\nAvg: %.2f\n".format(avg)
+      }
     }
 
-    val avg = results(k).fold(0.0)((a, b) => a + b) / results(k).length
+    str.toString()
+  }
 
-    println("\nAvg: %.2f".format(avg))
+  def timesAsCSV(benchmark: Benchmark, times: Times): String = {
+    val str = new StringBuilder()
+
+    str ++= "Queue;"
+    str ++= (1 to times.values.head.size).mkString(";")
+    str ++= "\n"
+
+    for (queue <- benchmark.worksWith) {
+      val ts = for (t <- times(queue)) yield {
+        "%.2f".format(t)
+      }
+      str ++= s"$queue;"
+      str ++= ts.mkString(";")
+      str ++= "\n"
+    }
+
+    str.toString()
+  }
+
+  def averagesAsCSV(results: Results): String = {
+    val str = new StringBuilder()
+
+    str ++= "Benchmark;" 
+    str ++= allQueueImpls.mkString(";")
+    str ++= "\n"
+
+    for ((benchmark, qs) <- results) {
+      str ++= benchmark.toString()
+      for (queue <- allQueueImpls) {
+        if (benchmark.worksWith.contains(queue)) {
+          val times = qs(queue)
+          val avg = times.fold(0.0)((a, b) => a + b) / times.length
+          str ++= s";%.2f".format(avg)
+        }
+        else {
+          str ++= ";"
+        }
+      }
+      str ++= "\n"
+    }
+
+    str.toString()
   }
 }

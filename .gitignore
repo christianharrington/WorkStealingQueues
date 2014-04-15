@@ -1,12 +1,10 @@
 # -*- mode: gitignore; -*-
 
-
+Scala/log
 
 # OS X
 
 .DS_Store
-
-
 
 # Scala
 

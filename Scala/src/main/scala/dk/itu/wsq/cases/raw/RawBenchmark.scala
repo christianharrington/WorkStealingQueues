@@ -33,4 +33,6 @@ case class RawBenchmark(workers: Int, depth: Int, branching: Int, seed: Long)
   }
 
   def worksWith: Seq[QueueImpl] = allQueueImpls
+
+  override def toString(): String = "Raw" 
 }
