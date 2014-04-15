@@ -5,7 +5,6 @@ import dk.itu.wsq.queue._
 import scala.concurrent.stm._
 
 class ChaseLevSTMQueue[E: Manifest] extends WorkStealingQueue[E] {
-  import java.util.concurrent.atomic._
   
   // Never decremented. Assumed to never overflow.
   protected var top: Ref[Long] = Ref(0)

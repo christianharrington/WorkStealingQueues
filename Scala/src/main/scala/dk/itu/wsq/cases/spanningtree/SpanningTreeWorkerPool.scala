@@ -2,6 +2,7 @@ package dk.itu.wsq.cases.spanningtree
 
 import dk.itu.wsq._
 import dk.itu.wsq.queue._
+import dk.itu.wsq.queue.stm._
 
 class SpanningTreeWorkerPool(val workerNumber: Int, val graphSize: Int, val queueImpl: QueueImpl)
   extends WorkerPool[SpanningTreeNode, SpanningTreeWorker, SpanningTreeNode]
@@ -10,6 +11,7 @@ class SpanningTreeWorkerPool(val workerNumber: Int, val graphSize: Int, val queu
   private val _workers = (for (i <- 0 until workerNumber) yield {
     val q: WorkStealingQueue[SpanningTreeNode] = queueImpl match {
       case ABPQueueImpl         => new ABPQueue(graphSize)
+      case ABPSTMQueueImpl      => new ABPSTMQueue(graphSize)
       case DuplicatingQueueImpl => new DuplicatingQueue(graphSize)
       case _                    => queueImplToQueue(queueImpl)
     }

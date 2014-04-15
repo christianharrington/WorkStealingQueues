@@ -5,6 +5,7 @@ import dk.itu.wsq.queue.stm._
 object `package` {
   val allQueueImpls = Seq(
     ABPQueueImpl,
+    ABPSTMQueueImpl,
     ChaseLevQueueImpl,
     ChaseLevNaiveShrinkingQueueImpl,
     ChaseLevSTMQueueImpl,
@@ -24,6 +25,9 @@ object `package` {
 sealed abstract class QueueImpl
 object ABPQueueImpl extends QueueImpl {
   override def toString(): String = "ABP Queue"
+}
+object ABPSTMQueueImpl extends QueueImpl {
+  override def toString(): String = "ABP STM Queue"
 }
 object ChaseLevQueueImpl extends QueueImpl {
   override def toString(): String =  "Chase-Lev Queue" 
@@ -64,6 +68,7 @@ trait QueueHelper {
   def queueImplToQueue[E: Manifest](q: QueueImpl): WorkStealingQueue[E] = {
     q match {
       case ABPQueueImpl                       => new ABPQueue[E](512)
+      case ABPSTMQueueImpl                    => new ABPSTMQueue[E](512)
       case ChaseLevQueueImpl                  => new ChaseLevQueue[E]()
       case ChaseLevNaiveShrinkingQueueImpl    => new ChaseLevNaiveShrinkingQueue[E]()
       case ChaseLevSTMQueueImpl               => new ChaseLevSTMQueue[E]()
