@@ -29,13 +29,7 @@ case class QuickSortBenchmark(workers: Int, length: Int, seed: Long)
     t
   }
 
-  def worksWith: Seq[QueueImpl] = {
-    everyQueueExcept(
-      IdempotentFIFOImpl, 
-      IdempotentLIFOImpl, 
-      IdempotentDEImpl, 
-      DuplicatingQueueImpl)
-  }
+  def worksWith: Seq[QueueImpl] = everyQueueExcept(idempotentQueueImpls: _*)
 
   override def toString(): String = "Quick sort" 
 }
