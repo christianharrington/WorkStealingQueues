@@ -10,10 +10,11 @@ class SpanningTreeWorkerPool(val workerNumber: Int, val graphSize: Int, val queu
 
   private val _workers = (for (i <- 0 until workerNumber) yield {
     val q: WorkStealingQueue[SpanningTreeNode] = queueImpl match {
-      case ABPQueueImpl         => new ABPQueue(graphSize)
-      case ABPSTMQueueImpl      => new ABPSTMQueue(graphSize)
-      case DuplicatingQueueImpl => new DuplicatingQueue(graphSize)
-      case _                    => queueImplToQueue(queueImpl)
+      case ABPQueueImpl            => new ABPQueue(graphSize)
+      case ABPSTMQueueImpl         => new ABPSTMQueue(graphSize)
+      case DuplicatingQueueImpl    => new DuplicatingQueue(graphSize)
+      case DuplicatingSTMQueueImpl => new DuplicatingSTMQueue(graphSize)
+      case _                       => queueImplToQueue(queueImpl)
     }
     new SpanningTreeWorker(i, this, q)
   }).toList

@@ -11,15 +11,23 @@ object `package` {
     ChaseLevSTMQueueImpl,
     ChaseLevNaiveShrinkingSTMQueueImpl,
     IdempotentLIFOImpl,
+    IdempotentLIFOSTMImpl,
     IdempotentFIFOImpl,
+    IdempotentFIFOSTMImpl,
     IdempotentDEImpl,
-    DuplicatingQueueImpl)
+    IdempotentDESTMImpl,
+    DuplicatingQueueImpl,
+    DuplicatingSTMQueueImpl)
 
   val idempotentQueueImpls = Seq(
     IdempotentLIFOImpl,
+    IdempotentLIFOSTMImpl,
     IdempotentFIFOImpl,
+    IdempotentFIFOSTMImpl,
     IdempotentDEImpl,
-    DuplicatingQueueImpl)
+    IdempotentDESTMImpl,
+    DuplicatingQueueImpl,
+    DuplicatingSTMQueueImpl)
 }
 
 sealed abstract class QueueImpl
@@ -44,14 +52,26 @@ object ChaseLevNaiveShrinkingSTMQueueImpl extends QueueImpl {
 object IdempotentLIFOImpl extends QueueImpl {
   override def toString(): String = "Idempotent Work Stealing Queue (LIFO)"
 }
+object IdempotentLIFOSTMImpl extends QueueImpl {
+  override def toString(): String = "Idempotent Work Stealing STM Queue (LIFO)"
+}
 object IdempotentFIFOImpl extends QueueImpl {
   override def toString(): String = "Idempotent Work Stealing Queue (FIFO)"
+}
+object IdempotentFIFOSTMImpl extends QueueImpl {
+  override def toString(): String = "Idempotent Work Stealing STM Queue (FIFO)"
 }
 object IdempotentDEImpl extends QueueImpl {
   override def toString(): String = "Idempotent Work Stealing Queue (Double-Ended)"
 }
+object IdempotentDESTMImpl extends QueueImpl {
+  override def toString(): String = "Idempotent Work Stealing STM Queue (Double-Ended)"
+}
 object DuplicatingQueueImpl extends QueueImpl {
   override def toString(): String = "Duplicating Queue"
+}
+object DuplicatingSTMQueueImpl extends QueueImpl {
+  override def toString(): String = "Duplicating STM Queue"
 }
 
 trait WorkStealingQueue[E] {
@@ -74,9 +94,13 @@ trait QueueHelper {
       case ChaseLevSTMQueueImpl               => new ChaseLevSTMQueue[E]()
       case ChaseLevNaiveShrinkingSTMQueueImpl => new ChaseLevNaiveShrinkingSTMQueue[E]()
       case IdempotentLIFOImpl                 => new IdempotentLIFO[E]()
+      case IdempotentLIFOSTMImpl              => new IdempotentLIFOSTM[E]()
       case IdempotentFIFOImpl                 => new IdempotentFIFO[E]()
+      case IdempotentFIFOSTMImpl              => new IdempotentFIFOSTM[E]()
       case IdempotentDEImpl                   => new IdempotentDE[E]()
+      case IdempotentDESTMImpl                => new IdempotentDESTM[E]()
       case DuplicatingQueueImpl               => new DuplicatingQueue[E](512)
+      case DuplicatingSTMQueueImpl            => new DuplicatingSTMQueue[E](512)
     }
   }
 

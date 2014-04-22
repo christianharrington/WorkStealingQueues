@@ -15,7 +15,7 @@ class QueueTests
   type TestQ = WorkStealingQueue[Int]
 
   "Taking from a WSQ" should "be LIFO" in failAfter(5 seconds) {
-    runWithQueues(everyQueueExcept(IdempotentFIFOImpl)) { q: TestQ =>
+    runWithQueues(everyQueueExcept(IdempotentFIFOImpl, IdempotentFIFOSTMImpl)) { q: TestQ =>
       val items = (1 to 100)
       items.foreach(i => q.push(i))
 
@@ -24,7 +24,7 @@ class QueueTests
   }
 
   "Stealing from a WSQ" should "be FIFO" in failAfter(5 seconds) {
-    runWithQueues(everyQueueExcept(IdempotentLIFOImpl)) { q: TestQ =>
+    runWithQueues(everyQueueExcept(IdempotentLIFOImpl, IdempotentLIFOSTMImpl)) { q: TestQ =>
       val items = (1 to 100)
       items.foreach(i => q.push(i))
       
