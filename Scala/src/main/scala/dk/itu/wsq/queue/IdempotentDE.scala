@@ -6,9 +6,9 @@ class IdempotentDE[E: Manifest] extends WorkStealingQueue[E] {
 
   case class Anchor(head: Int, size: Int, tag: Int)
 
-  private var tasks: Array[E] = new Array[E](1)
+  @volatile private var tasks: Array[E] = new Array[E](1)
 
-  private var anchor: AtomicReference[Anchor] = 
+  @volatile private var anchor: AtomicReference[Anchor] = 
     new AtomicReference[Anchor](Anchor(0, 0, 0)) // (head, size, tag)
 
   @tailrec
