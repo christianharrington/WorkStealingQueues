@@ -16,14 +16,13 @@ object RawBenchmark {
 
 case class RawBenchmark(workers: Int, depth: Int, branching: Int, seed: Long)
   extends Benchmark {
+  import scala.util.Random
 
   def name = s"Raw with $workers workers and a depth of $depth"
 
   def run(queueImpl: QueueImpl): Double = {
-    val builder = RawTreeBuilder(seed)
-    val tree    = RawNode(0)
-    builder.build(tree, depth, branching)
-    val total   = builder.nodes(tree)
+    val tree    = RawTreeBuilder.build(depth, branching)(new Random(seed))
+    val total   = RawTreeBuilder.nodes(tree)
 
     val wp = new RawWorkerPool(workers, queueImpl, total, seed)
 

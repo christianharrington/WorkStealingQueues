@@ -2,23 +2,20 @@ package dk.itu.wsq.cases.raw
 
 import dk.itu.wsq._
 
-case class RawTreeBuilder(seed: Long) {
-  import scala.annotation.tailrec
+object RawTreeBuilder {
+  import scala.util.Random
 
-  val random = new java.util.Random(seed)
-
-  def build(node: RawNode, maxDepth: Int, branching: Int): Unit = {
+  def build(depth: Int, branching: Int)(random: Random): RawNode = {
     val fanout = random.nextInt(branching) + 1
 
-    if (node.depth < maxDepth) {
-      val children = for (i <- 0 to fanout) yield {
-        RawNode(node.depth + 1)
+    val children = depth match {
+      case 0 => Seq()
+      case d => for (i <- 0 to fanout) yield {
+        build(d - 1, branching)(random)
       }
-
-      node.children ++= children
     }
 
-    node.children foreach (n => build(n, maxDepth, branching))
+    RawNode(children)
   }
 
   def nodes(node: RawNode): Int = {
