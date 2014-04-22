@@ -43,6 +43,7 @@ object BenchmarkApp extends App with QueueHelper {
   } else {
     conf.getLong("benchmarks.seed")
   }
+  println(s"Using seed $seed")
   val waitForInput = conf.getBoolean("benchmarks.wait")
 
   val log          = conf.getBoolean("benchmarks.log")
@@ -78,7 +79,7 @@ object BenchmarkApp extends App with QueueHelper {
   }
 
   def logAverages(): Unit = {
-    val path = s"$logDir/averages.csv"
+    val path = s"$logDir/$seed.averages.csv"
     println(s"Writing avereages to $path")
     val writer = new BufferedWriter(new FileWriter(path))
     writer.write(averagesAsCSV(results))
@@ -87,7 +88,7 @@ object BenchmarkApp extends App with QueueHelper {
 
   def logTimes(): Unit = {
     for (b <- benchmarks) {
-      val path = s"$logDir/$b.csv"
+      val path = s"$logDir/$seed.$b.csv"
       println(s"Writing times for $b to $path")
       val writer = new BufferedWriter(new FileWriter(path))
       writer.write(timesAsCSV(b, results(b)) + "\n")
