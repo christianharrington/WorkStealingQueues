@@ -4,18 +4,21 @@ organization := "dk.itu"
  
 version := "0.1"
  
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.0"
 
 scalacOptions += "-deprecation"
 
 scalacOptions += "-feature"
 
 scalacOptions += "-Xfatal-warnings"
+
+incOptions := incOptions.value.withNameHashing(true)
  
 resolvers ++= Seq()
  
 libraryDependencies ++= Seq(
-  "org.scalatest" % "scalatest_2.10" % "2.0" % "test",
+  "org.scala-lang.modules" %% "scala-xml" % "1.0.1",
+  "org.scalatest" %% "scalatest" % "2.1.3" % "test",
   "com.typesafe" % "config" % "1.2.0",
   "org.scala-stm" %% "scala-stm" % "0.7"
 )
