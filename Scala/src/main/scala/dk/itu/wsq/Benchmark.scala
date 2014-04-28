@@ -30,10 +30,19 @@ object BenchmarkApp extends App with QueueHelper {
   import java.io._
   import scala.util.Random
 
+  private val conf = args.length >= 1 match {
+    case true => {
+      val path = args(0)
+      println(s"Using config file at $path")
+      val globalConfFile = new File(path)
+      System.setProperty("config.file", globalConfFile.getPath())
+      ConfigFactory.load()
+    }
+    case false => ConfigFactory.load()
+  }
+
   type Times   = Map[QueueImpl, Seq[Double]]
   type Results = Map[Benchmark, Times]
-
-  private val conf = ConfigFactory.load()
 
   print("Loading config... ")
   val tries   = conf.getInt("benchmarks.tries")
