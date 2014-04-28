@@ -14,7 +14,7 @@ class IdempotentDE[E: Manifest] extends WorkStealingQueue[E] {
   @tailrec
   final def push(e: E): Unit = {
     val localAnchor = anchor.get()
-    if(localAnchor.size == tasks.length) {
+    if (localAnchor.size == tasks.length) {
       expand()
       push(e)
     } else {
@@ -25,7 +25,7 @@ class IdempotentDE[E: Manifest] extends WorkStealingQueue[E] {
 
   final def take(): Option[E] = {
     val localAnchor = anchor.get()
-    if(localAnchor.size == 0) {
+    if (localAnchor.size == 0) {
       None
     } else {
       val task = tasks((localAnchor.head + localAnchor.size - 1) % tasks.length)
@@ -37,13 +37,12 @@ class IdempotentDE[E: Manifest] extends WorkStealingQueue[E] {
   @tailrec
   final def steal(): Option[E] = {
     val localAnchor = anchor.get()
-    if(localAnchor.size == 0) {
+    if (localAnchor.size == 0) {
       None
     } else {
-      val arr = tasks
+      val arr = tasks.clone()
       val task = arr(localAnchor.head % arr.length)
-      val h2 = localAnchor.head + 1 
-      if(anchor.compareAndSet(localAnchor, Anchor(h2, localAnchor.size - 1, localAnchor.tag))) {
+      if (anchor.compareAndSet(localAnchor, Anchor(localAnchor.head + 1, localAnchor.size - 1, localAnchor.tag))) {
         Some(task)
       }
       else {
