@@ -111,4 +111,4 @@ tramp
 *.out
 *.synctex.gz
 *.fdb_latexmk
-report/main.pdf
+report/Work-stealing Queues.pdf
