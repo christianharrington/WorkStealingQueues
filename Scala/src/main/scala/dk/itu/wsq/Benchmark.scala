@@ -62,9 +62,9 @@ object BenchmarkApp extends App with QueueHelper {
   println("Loading benchmarks... ")
   val benchmarks: Seq[Benchmark] = Seq(
     QuickSortBenchmark(workers, seed, conf),
-    RawBenchmark(workers, seed, conf),
     SpanningTreeBenchmark(workers, seed, conf),
-    XMLSerializationBenchmark(workers, seed, conf)
+    XMLSerializationBenchmark(workers, seed, conf),
+    RawBenchmark(workers, seed, conf)
   )
   println("Done.")
 
@@ -88,7 +88,7 @@ object BenchmarkApp extends App with QueueHelper {
   }
 
   def logAverages(): Unit = {
-    val path = s"$logDir/$seed.averages.csv"
+    val path = s"$logDir/$seed.w$workers.averages.csv"
     println(s"Writing avereages to $path")
     val writer = new BufferedWriter(new FileWriter(path))
     writer.write(averagesAsCSV(results))
@@ -97,7 +97,7 @@ object BenchmarkApp extends App with QueueHelper {
 
   def logTimes(): Unit = {
     for (b <- benchmarks) {
-      val path = s"$logDir/$seed.$b.csv"
+      val path = s"$logDir/$seed.w$workers.$b.csv"
       println(s"Writing times for $b to $path")
       val writer = new BufferedWriter(new FileWriter(path))
       writer.write(timesAsCSV(b, results(b)) + "\n")
