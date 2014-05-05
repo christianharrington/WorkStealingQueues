@@ -21,5 +21,8 @@ We have implemented three different approaches to idempotent work stealing\,\cit
 \paragraph{The Idempotent Double-Ended} \,\cite[p. 49]{Michael:2009:IWS:1594835.1504186} adds and steals tasks from the beginning of the queue and takes tasks from the end. This means that this implementation also needs ABA prevention. This is done a similar way as the LIFO with a \texttt{anchor} packed with the \texttt{head}, \texttt{size}, and a \texttt{tag} .
 
 \subsection{Duplicating Queue}
+Similar to the idempotent queues the duplicating queue\,\cite[p. 233]{Leijen:2009:DTP:1639949.1640106} can potentially return a pushed task more than once. When stealing from this queue, the stolen task is either removed from the queue or just duplicated. When a task is the only element in the queue both \texttt{steal} (going from the \texttt{head}) and \texttt{take} (going from the \texttt{tail}) will access the same task. In this case we say that the task has been ``duplicated''.
+
+Furthermore, if a new element is pushed just after the above duplication, the \texttt{head} and \texttt{tail} pointers are inconsistent\,\cite[p. 235]{Leijen:2009:DTP:1639949.1640106}. This is solved by another pointer \texttt{tailMin} indicating the minimal index at which a task has been taken. When checking if the queue is empty when taking, \texttt{head} is compared to the smallest value of \texttt{tailMin} and \texttt{tail}.
 
 \subsection{Comparison}
