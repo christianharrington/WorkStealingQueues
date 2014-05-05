@@ -1,12 +1,24 @@
 %!TEX root = ../Work-stealing Queues.tex
 \section{Implementations}
 \label{sec:implementations}
+In the following section we will describe the work-stealing queues we have implemented. Upon each queue three operations can be made, two of which are classic queue operations. \texttt{push} simply adds a task to the queue and \texttt{take} removes a task from the queue. These operations are only meant to be used by the owner of the queue. The third operation, \texttt{steal}, allows threads to ``steal'' work from other threads. While the \texttt{steal} and \texttt{take} operations have similar effects, they have to work differently to ensure the consistency of the queue.
 
 \subsection{Arora-Blumofe-Plaxton (ABP) Queue}
+The ABP queue\,\cite{Arora:1998:TSM:277651.277678} holds its tasks in an array and uses \texttt{top} and \texttt{bottom} pointer to keep track of the start and end of the queue. Pushing a task to the queue (\texttt{push}) is straight forward. Just add it to the array at the \texttt{bottom} position and increment \texttt{bottom}. Taking tasks from the queue (\texttt{take} and \texttt{steal}) requires more work to ensure that the same work is not extracted twice as the two, and multiple different \texttt{steal} operations, can happen simultaneously. This is done by only allowing \texttt{steal} to return if the \texttt{top} has remained unchanged throughout the operation. This, however, is not sufficient\,\cite[p. 4]{Arora:1998:TSM:277651.277678}. In the case where the queue has been empties and refilled to the same size between the read from the queue and the comparison with top, the previously read task is no longer valid. To handle this a \texttt{tag} value is added, which is incremented whenever the queue is completely emptied. This \texttt{tag} together with \texttt{top} is now known as \texttt{age}. Now, instead of just the \texttt{top} having to remain unchanged, the entire \texttt{age} must be the same.
 
 \subsection{Chase-Lev Queue}
 
+
 \subsection{Idempotent Queues}
+The previously discussed queues guarantee that no task will be extracted twice. This strictness can be relaxed in some cases to possibly improve performance\,\cite[p. 46]{Michael:2009:IWS:1594835.1504186}. The following queues don't have this guarantee, which means that they can only be used in cases where this idempotence does not violate the semantics of the tasks. As such these queues can only be used for cases where it is allowed to execute the same task twice.
+
+We have implemented three different approaches to idempotent work stealing\,\cite{Michael:2009:IWS:1594835.1504186}. Generally, all three work in similar fashion, but the order in which tasks are extracted differ from queue to queue. All three queues keep their tasks in an array, but uses different ways of keeping track of the ends of the queue. When talking about these queues we use the term ``queue'' loosely to mean a data structure that keeps its elements in order.
+
+\paragraph{The Idempotent LIFO}\,\cite[p. 47]{Michael:2009:IWS:1594835.1504186} does not need to track where the queue starts as tasks are always added to, and extracted from the end. The end of the queue is simply noted by a \texttt{tail} pointer indicating the end. The \texttt{tail} points to the last task in the queue, and if it is zero the queue is empty. This \texttt{tail} is packed with a \texttt{tag} for ABA prevention when stealing in an \texttt{anchor}. This \texttt{anchor} cannot change between the reading of a value and the returning of this value when stealing. It is worth noting that as oppose to the other queues this queue (along side the Idempotent FIFO queue) \texttt{steal} and \texttt{take} from the same end of the queue.
+
+\paragraph{The Idempotent FIFO}\,\cite[p. 48]{Michael:2009:IWS:1594835.1504186}  adds tasks to the beginning of the queue and extracts (both \texttt{steal} and \texttt{take}) from the end of the queue. Therefore it needs to track both the start (\texttt{head}) and the end (\texttt{tail}) of the queue. Interestingly enough this implementation does not need ABA prevention as tasks are always added to a different end than they are taken.
+
+\paragraph{The Idempotent Double-Ended} \,\cite[p. 49]{Michael:2009:IWS:1594835.1504186} adds and steals tasks from the beginning of the queue and takes tasks from the end. This means that this implementation also needs ABA prevention. This is done a similar way as the LIFO with a \texttt{anchor} packed with the \texttt{head}, \texttt{size}, and a \texttt{tag} .
 
 \subsection{Duplicating Queue}
 
