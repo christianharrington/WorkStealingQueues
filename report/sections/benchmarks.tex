@@ -16,3 +16,7 @@ For our third case, we implemented the parallel spanning tree algorithm describe
 
 \subsubsection{XML Serialization} % XML serialization
 Our final case was inspired by Lu and Gannon's Parallel XML Processing~\cite{Lu:2007:PXP:1272457.1272462}. By using work-stealing queues, the processing of the XML document can be easily load-balanced without knowing its structure before hand. For this test case, we serialize a model of an XML document to a string. This is is done in a manner reminiscent of the quick sort case. When a \texttt{Node} is examined by a \texttt{Worker}, all its children are added to the queue. If the \texttt{Node} is a leaf, it is serialized, and its parent \texttt{Node} is notified. Once all the children of a \texttt{Node} have been serialized, the \texttt{Node} itself is serialized. The work is done when the root \texttt{Node} has been serialized.
+
+\subsection{Results}
+Each of the four test cases were executed 50 times with random data. They were tested with 8, 16, 32, and 48 threads. Due to technical difficulties, they were not tested with more than 48 threads. See Section \ref{sec:testing} for an explanation. All benchmarks were run on a machine with \todo{Insert specs}.
+\todo{Insert results}
