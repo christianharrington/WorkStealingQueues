@@ -1,0 +1,5 @@
+Benchmark;ABP Queue;Chase-Lev Queue;Chase-Lev Naive Shrinking Queue;Idempotent Work Stealing Queue (LIFO);Idempotent Work Stealing Queue (FIFO);Idempotent Work Stealing Queue (Double-Ended);Duplicating Queue
+Quick sort;400.28;351.26;379.75;;;;
+Spanning Tree;144.50;149.09;137.92;178.60;125.22;276.30;151.47
+XML;1210.11;1138.10;1127.79;;;;
+Raw;1572.27;2556.13;2261.03;4482.83;11661.40;11152.57;2286.77
