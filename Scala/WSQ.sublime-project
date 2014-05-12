@@ -1,0 +1,7 @@
+{
+  "folders":[{
+    "path":"./",
+    "folder_exclude_patterns": ["target", ".ensime", ".settings", ".ensime_lucene"],
+    "file_exclude_patterns": [".cache", ".classpath", ".ensime", ".project"]
+  }]
+}
