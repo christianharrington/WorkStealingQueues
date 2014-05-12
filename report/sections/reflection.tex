@@ -1,0 +1,33 @@
+%!TEX root = ../Work-stealing Queues.tex
+\section{Reflection}
+\label{sec:Reflection}
+Besides the trouble with testing described in Section~\ref{sec:testing}, we
+encountered several problems when trying to perform benchmarks on our various
+queue implementations. The most important of these issues are described below.
+ 
+\subsection{Cases For Idempotent Queues}
+\label{sub:cases_for_idempotent_queues}
+While performing the benchmarks, we realized we had made a mistake when
+choosing our cases. First of all, when choosing which cases to implement, we
+did not consider which could easily be run with the idempotent queues. This
+meant we only had two cases to test the idempotent queues with. Further, the
+two cases that happen to work with the idempotent queues are the two cases
+that involve the least work for each thread. This makes it hard for us to tell
+to which degree the performance of the idempotent queues is effected by queue
+operations versus the overhead of possibly performing a piece of work multiple
+times.
+
+\subsection{Statistic For Queue Operations}
+\label{sub:statistic_for_queue_operations}
+Perhaps the greatest issue we found when analyzing our benchmarks, was the lack
+of detailed metrics for the queues. For instance, it would be very useful to be
+able to measure how many unsuccessful steals occur, and how long each of these
+operations take. This degree of detailed information would let us reason more
+accurately about the performance characteristics of our different queues and
+cases. Unfortunately it is difficult to make these types of measurements
+without effecting the execution of the program. If we were only working with
+single threaded workloads, the additional overhead from the logging would be
+easy to account for. But in our program, where specific interleavings of
+multiple threads can produce reasonably large changes in execution time, it is
+hard to account for the effects of logging. Regrettably, we did not find an
+acceptable solution within the scope of this project.
