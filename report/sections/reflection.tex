@@ -31,3 +31,15 @@ easy to account for. But in our program, where specific interleavings of
 multiple threads can produce reasonably large changes in execution time, it is
 hard to account for the effects of logging. Regrettably, we did not find an
 acceptable solution within the scope of this project.
+
+\subsection{Hardware}
+\label{sub:hardware}
+One unexpected area where we encountered difficulties was with the processors
+on the machine used for benchmarks. For most of the project we were under the
+impression that it was a 16 core Intel Xeon processor with hyper-threading.
+Later, we found out it had two AMD Opteron processors with 16 cores each.
+Strangely, the information in \texttt{/proc/cpuinfo} and the output from
+\texttt{lscpu} both implied only 8 physical cores were available on each
+processor, with each core exposing two logical cores. To our knowledge, AMD
+does not support a technology equivalent to hyper-threading. Because of this,
+some uncertainty exists as two how the machine is actually configured.
