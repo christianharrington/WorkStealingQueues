@@ -1,22 +1,72 @@
 %!TEX root = ../Work-stealing Queues.tex
 \section{Benchmarks}
-To test our different queue implementations, we developed a small framework for parallelizing computations using work-stealing queues. There are three main components, the \texttt{WorkerPool}, \texttt{Worker}, and \texttt{Node} traits. For each of the cases below, classes implemented these traits were created. The \texttt{WorkerPool} is in charge of starting the desired number of threads, and assigning each \texttt{Worker} to a thread. The \texttt{Worker} holds a queue, and contains the main logic for the case. \texttt{Node}s represent individual ``work units'', and are the elements contained in the queues.
+To test our different queue implementations, we developed a small framework
+for parallelizing computations using work-stealing queues. There are three
+main components, the \texttt{WorkerPool}, \texttt{Worker}, and \texttt{Node}
+traits. For each of the cases below, classes implementing these traits were
+created. The \texttt{WorkerPool} is in charge of starting the desired number
+of threads, and assigning each \texttt{Worker} to a thread. The \texttt{Worker}
+holds a queue, and contains the main logic for the case. \texttt{Node}s
+represent individual ``work units'', and are the elements contained in the
+queues.
 
 \label{sec:benchmarks}
 \subsection{Cases}
-To test our different work-stealing queues, we have implemented four different examples.
+To test our different work-stealing queues, we have implemented four different
+examples.
 \subsubsection{Raw Queue Operations} %Raw
-The first, which we call ``Raw'', is meant to do as little work as possible, and thus to stress the queue implementations as much as possible. \texttt{RawTreeBuilder} builds a tree of \texttt{Node}s, which hold an arbitrary number of children, and nothing else. Each \texttt{Worker} simply looks at a \texttt{Node}, and adds all its children to the queue, before moving to the next \texttt{Node}. This means that queue operations will be the deciding factor for how long a run will take. It should be noted that this is an unrealistic workload, as no actual work is done, besides traversing the tree.
+
+The first, which we call ``Raw'', is meant to do as little work as possible,
+and thus to stress the queue implementations as much as possible. A
+\texttt{RawTreeBuilder} builds a tree of \texttt{Node}s, which hold an
+arbitrary number of children, and nothing else. Each \texttt{Worker} simply
+looks at a \texttt{Node}, and adds all its children to the queue, before
+moving to the next \texttt{Node}. This means that queue operations will be the
+deciding factor for how long a run will take. It should be noted that this is
+an unrealistic workload, as no actual work is done, besides traversing the
+tree.
 
 \subsubsection{Quick Sort} % Quick sort
-Our second case is a simple quick sort implementation. It is simple in that it does not sort in-place. Instead, when splitting a string, each new child \texttt{Node} receives a full copy of the string to split. When a lower threshold for string length is reached, insertion sort is used. Once a string has been sorted using insertion sort, its parent \texttt{Node} is notified. If both the parent \texttt{Node}'s children have been sorted, the parent \texttt{Node} is added to the queue. When the parent \texttt{Node} is examined by a \texttt{Worker}, the two sorted substrings are combined, and the next parent \texttt{Node} in the hierarchy is notified. When both children of the root \texttt{Node} are combined, the entire string has been sorted.
+Our second case is a simple quick sort implementation. It is simple in that it
+does not sort in-place. Instead, when splitting an array, each new child
+\texttt{Node} receives a full copy of the array to split. When a lower
+threshold for array length is reached, insertion sort is used. Once an array
+has been sorted using insertion sort, its parent \texttt{Node} is notified. If
+both the parent \texttt{Node}'s children have been sorted, the parent
+\texttt{Node} is added to the queue. When the parent \texttt{Node} is examined
+by a \texttt{Worker}, the two sorted subarrays are combined, and the next
+parent \texttt{Node} in the hierarchy is notified. When both children of the
+root \texttt{Node} are combined, the entire array has been sorted.
 
 \subsubsection{Spanning Tree} % Spanning tree
-For our third case, we implemented the parallel spanning tree algorithm described by Bader and Cong~\cite{Bader04afast}, with some small differences. Their algorithm functions by first letting a single thread build a ``stub tree'', a small portion of the full tree built by randomly walking the graph. This tree's vertices are then evenly distributed into each queue. After this, each thread starts consuming work from their queues. Our implementation is slightly different, in that we do not build the initial stub tree. Instead, the first \texttt{Worker} is given a node in the graph to work on, and as it generates more work, the other \texttt{Worker}s can steal from it. This change was purely to make the implementation simpler.
+For our third case, we implemented the parallel spanning tree algorithm
+described by Bader and Cong~\cite{Bader04afast}, with some small differences.
+Their algorithm functions by first letting a single thread build a ``stub
+tree'', a small portion of the full tree built by randomly walking the graph.
+This tree's vertices are then evenly distributed into each queue. After this,
+each thread starts consuming work from their queues. Our implementation is
+slightly different, in that we do not build the initial stub tree. Instead, the
+first \texttt{Worker} is given a node in the graph to work on, and as it
+generates more work, the other \texttt{Worker}s can steal from it. This change
+was purely to make the implementation simpler, and does not affect the
+correctness of the algorithm, although it might make the initial steps slightly
+slower.
 
 \subsubsection{XML Serialization} % XML serialization
-Our final case was inspired by Lu and Gannon's Parallel XML Processing~\cite{Lu:2007:PXP:1272457.1272462}. By using work-stealing queues, the processing of the XML document can be easily load-balanced without knowing its structure before hand. For this test case, we serialize a model of an XML document to a string. This is is done in a manner reminiscent of the quick sort case. When a \texttt{Node} is examined by a \texttt{Worker}, all its children are added to the queue. If the \texttt{Node} is a leaf, it is serialized, and its parent \texttt{Node} is notified. Once all the children of a \texttt{Node} have been serialized, the \texttt{Node} itself is serialized. The work is done when the root \texttt{Node} has been serialized.
+Our final case was inspired by Lu and Gannon's Parallel XML
+Processing~\cite{Lu:2007:PXP:1272457.1272462}. By using work-stealing queues,
+the processing of the XML document can be easily load-balanced without knowing
+its structure beforehand. For this test case, we serialize a model of an XML
+document to a string. This is is done in a manner reminiscent of the quick sort
+case. When a \texttt{Node} is examined by a \texttt{Worker}, all its children
+are added to the queue. If the \texttt{Node} is a leaf, it is serialized, and
+its parent \texttt{Node} is notified. Once all the children of a \texttt{Node}
+have been serialized, the \texttt{Node} itself is serialized. The work is done
+when the root \texttt{Node} has been serialized.
 
 \subsection{Results}
-Each of the four test cases were executed 50 times with random data. They were tested with 8, 16, 32, and 48 threads. Due to technical difficulties, they were not tested with more than 48 threads. See Section \ref{sec:testing} for an explanation. All benchmarks were run on a machine with \todo{Insert specs}.
+Each of the four test cases were executed 50 times with random data. They were
+tested with 8, 16, 32, and 48 threads. Due to technical difficulties, they were
+not tested with more than 48 threads. See Section \ref{sec:testing} for an
+explanation. All benchmarks were run on a machine with \todo{Insert specs}.
 \todo{Insert results}
