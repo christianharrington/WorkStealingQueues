@@ -1,10 +1,37 @@
 %!TEX root = ../Work-stealing Queues.tex
 \section{Implementations}
 \label{sec:implementations}
-In the following section we will describe the work-stealing queues we have implemented. Upon each queue three operations can be made, two of which are classic queue operations. \texttt{push} simply adds a task to the queue and \texttt{take} removes a task from the queue. These operations are only meant to be used by the owner of the queue. The third operation, \texttt{steal}, allows threads to ``steal'' work from other threads. While the \texttt{steal} and \texttt{take} operations have similar effects, they have to work differently to ensure the consistency of the queue.
+In the following section we will describe the work-stealing queues we have implemented. Upon each queue three operations can be made, two of which are classic queue operations. The \texttt{push} operation simply adds a task to the queue and \texttt{take} removes a task from the queue. These operations are only meant to be used by the owner of the queue. The third operation, \texttt{steal}, allows threads to ``steal'' work from other threads. While the \texttt{steal} and \texttt{take} operations have similar effects, they have to work differently to ensure the consistency of the queue.
 
 \subsection{Arora-Blumofe-Plaxton (ABP) Queue}
-The ABP queue\,\cite{Arora:1998:TSM:277651.277678} holds its tasks in an array and uses \texttt{top} and \texttt{bottom} pointer to keep track of the start and end of the queue. Pushing a task to the queue (\texttt{push}) is straight forward. Just add it to the array at the \texttt{bottom} position and increment \texttt{bottom}. Taking tasks from the queue (\texttt{take} and \texttt{steal}) requires more work to ensure that the same work is not extracted twice as the two, and multiple different \texttt{steal} operations, can happen simultaneously. This is done by only allowing \texttt{steal} to return if the \texttt{top} has remained unchanged throughout the operation. This, however, is not sufficient\,\cite[p. 4]{Arora:1998:TSM:277651.277678}. In the case where the queue has been emptied and refilled to the same size between the read from the queue and the comparison with top, the previously read task is no longer valid. To handle this a \texttt{tag} value is added, which is incremented whenever the queue is completely emptied. This \texttt{tag} together with \texttt{top} is now known as \texttt{age}. Now, instead of just the \texttt{top} having to remain unchanged, the entire \texttt{age} must be the same.
+The ABP queue\,\cite{Arora:1998:TSM:277651.277678} holds its tasks in an array and uses \texttt{top} and \texttt{bottom} pointer to keep track of the start and end of the queue. Pushing a task to the queue (\texttt{push}) is straightforward. Just add it to the array at the \texttt{bottom} position and increment \texttt{bottom}. Taking tasks from the queue requires more work to ensure that the same work is not extracted twice as \texttt{take} and multiple different \texttt{steal} operations can happen simultaneously. Avoid duplication is done by only allowing \texttt{steal} to return if the \texttt{top} has remained unchanged throughout the operation. This, however, is not sufficient\,\cite[p. 4]{Arora:1998:TSM:277651.277678} as it is still prone to the ABA problem. If the queue is emptied and refilled to the same size between the read from the queue (Figure \ref{fig:abpsteal} line 9) and the comparison with \texttt{top} (Figure \ref{fig:abpsteal} line 12) the read might no longer be valid. To handle this a \texttt{tag} value is added, which is incremented whenever the queue is completely emptied. This \texttt{tag} together with \texttt{top} is now known as \texttt{age}. Now, instead of just the \texttt{top} having to remain unchanged, the entire \texttt{age} must be the same.
+
+\begin{figure}
+\begin{lstlisting}[language=scala,basicstyle=\ttfamily\bfseries\scriptsize,numbers=left]
+final def steal(): Option[E] = {
+    val oldAge = age.get
+    val localBot = bottom
+
+    if (localBot <= oldAge.top) { // Queue is Empty
+      None
+    }
+    else {
+      val v = queue.get(oldAge.top)
+      val newAge = Age(oldAge.tag, oldAge.top + 1)
+
+      if (age.compareAndSet(oldAge, newAge)) { 
+      	// CAS for ABA prevention
+        Some(v)
+      }
+      else {
+        None
+      }
+    }
+  }
+\end{lstlisting}
+\caption{ABP implementation of \texttt{steal}.}
+\label{fig:abpsteal}
+\end{figure}
 
 \subsection{Chase-Lev Queue}
 Chase and Lev designed an improved version of the ABP queue using circular arrays\,\citep{ChaseLev05}. The Chase-Lev implementation solves the fundamental problem from which the ABP queue suffers, namely the use of fixed-size arrays. Fixed-size arrays make the ABP queue prone to overflow problems, while also leading to inefficient memory usage: In a system with \emph{n} threads and allocated memory \emph{m}, any queue in the system can hold at most $\frac{m}{n}$ elements. Using dynamic circular arrays, any Chase-Lev queue can be grown when necessary, which means that the shared memory does not have to be divided among the queues upfront. To improve memory usage, Chase and Lev also describe a shrinking operation for the underlying circular arrays, such that memory is reclaimed whenever the actual size of an array is less than the allocated size by some constant factor. Since the \texttt{top} pointer is never decremented, the size of a given Chase-Lev queue is only restricted to the size of \texttt{top} (Chase and Lev use a 64-bit integer). Contrary to the ABP queue, the Chase-Lev implementation does not need a tag to avoid the ABA problem. As a direct consequence of the \texttt{top} pointer never being decremented, any thread will always notice if the contents of the queue have changed (using a \emph{compare-and-swap} operation on \texttt{top}).
@@ -12,19 +39,24 @@ Chase and Lev designed an improved version of the ABP queue using circular array
 While all our tests have been run in a garbage-collected environment on the JVM, the Chase-Lev queue does not rely on garbage collection for memory management.
 
 \subsection{Idempotent Queues}
-The previously discussed queues guarantee that no task will be extracted twice. This strictness can be relaxed in some cases to possibly improve performance\,\cite[p. 46]{Michael:2009:IWS:1594835.1504186}. The following queues don't have this guarantee, which means that they can only be used in cases where this idempotence does not violate the semantics of the tasks. As such these queues can only be used for cases where it is allowed to execute the same task twice.
+The previously discussed queues guarantee that no task will be extracted twice. This strictness can be relaxed in some cases to possibly improve performance\,\cite[p. 46]{Michael:2009:IWS:1594835.1504186}. The rest of the queues don't have this guarantee, which means that they can only be used in cases where this idempotence does not violate the semantics of the tasks. As such these queues can only be used for cases where it is allowed to execute the same task twice.
 
 We have implemented three different approaches to idempotent work stealing\,\cite{Michael:2009:IWS:1594835.1504186}. Generally, all three work in similar fashion, but the order in which tasks are extracted differ from queue to queue. All three queues keep their tasks in an array, but uses different ways of keeping track of the ends of the queue. When talking about these queues we use the term ``queue'' loosely to mean a data structure that keeps its elements in order.
 
-\paragraph{The Idempotent LIFO}\,\cite[p. 47]{Michael:2009:IWS:1594835.1504186} does not need to track where the queue starts as tasks are always added to, and extracted from the end. The end of the queue is simply noted by a \texttt{tail} pointer indicating the end. The \texttt{tail} points to the last task in the queue, and if it is zero the queue is empty. This \texttt{tail} is packed with a \texttt{tag} for ABA prevention when stealing in an \texttt{anchor}. This \texttt{anchor} cannot change between the reading of a value and the returning of this value when stealing. It is worth noting that as oppose to the other queues this queue (along side the Idempotent FIFO queue) \texttt{steal} and \texttt{take} from the same end of the queue.
+\paragraph{The Idempotent LIFO}\,\cite[p. 47]{Michael:2009:IWS:1594835.1504186} does not need to track where the queue starts as tasks are always added to, and extracted from the end. The end of the queue is simply noted by a \texttt{tail} pointer indicating the end. The \texttt{tail} points to the last task in the queue, and if it is zero the queue is empty. This \texttt{tail} is packed with a \texttt{tag} in an \texttt{anchor} for ABA prevention when stealing. This \texttt{anchor} must remain unchanged between the read of a stolen value and the return of this value. It is worth noting that, in contrast to the other queues, this queue (along side the Idempotent FIFO queue) \texttt{steal} and \texttt{take} from the same end of the queue.
 
 \paragraph{The Idempotent FIFO}\,\cite[p. 48]{Michael:2009:IWS:1594835.1504186}  adds tasks to the beginning of the queue and extracts (both \texttt{steal} and \texttt{take}) from the end of the queue. Therefore it needs to track both the start (\texttt{head}) and the end (\texttt{tail}) of the queue. Interestingly enough this implementation does not need ABA prevention as tasks are always added to a different end than they are taken.
 
 \paragraph{The Idempotent Double-Ended} \,\cite[p. 49]{Michael:2009:IWS:1594835.1504186} adds and steals tasks from the beginning of the queue and takes tasks from the end. This means that this implementation also needs ABA prevention. This is done a similar way as the LIFO with a \texttt{anchor} packed with the \texttt{head}, \texttt{size}, and a \texttt{tag} .
 
 \subsection{Duplicating Queue}
-Similar to the idempotent queues the duplicating queue\,\cite[p. 233]{Leijen:2009:DTP:1639949.1640106} can potentially return a pushed task more than once. When stealing from this queue, the stolen task is either removed from the queue or just duplicated. When a task is the only element in the queue both \texttt{steal} (going from the \texttt{head}) and \texttt{take} (going from the \texttt{tail}) will access the same task. In this case we say that the task has been ``duplicated''.
+Similar to the idempotent queues the duplicating queue\,\cite[p. 233]{Leijen:2009:DTP:1639949.1640106} can potentially return a pushed task more than once. When stealing from this queue the stolen task is either removed from the queue or just duplicated. When a task is the only element in the queue both \texttt{steal} (going from the \texttt{head}) and \texttt{take} (going from the \texttt{tail}) will access the same task. In this case we say that the task has been ``duplicated''. Two thieves cannot steal the same element from the queue as stealing requires a lock.
 
 Furthermore, if a new element is pushed just after the above duplication, the \texttt{head} and \texttt{tail} pointers are inconsistent\,\cite[p. 235]{Leijen:2009:DTP:1639949.1640106}. This is solved by another pointer \texttt{tailMin} indicating the minimal index at which a task has been taken. When checking if the queue is empty when taking, \texttt{head} is compared to the smallest value of \texttt{tailMin} and \texttt{tail}.
 
 \subsection{Comparison}
+Our implementations can be split into two categories: Those that are idempotent, and those that are not. The idea behind the idempotent queues is that the queue operations themselves are simpler, but at the risk of performing the same task multiple times. This means that we can expect the idempotent queues to perform well in cases where there are many queue operations. They will, however, not work in cases where the same work is not allowed to be done twice. For us this means that the queues that are idempotent cannot be tested on our quick sort and XML serialization cases.
+
+Amongst the idempotent queues the duplicating queue stands out. Since it is only idempotent when the owner and exactly one thief attempts to access a queue with exactly one element, duplication of work is a lot more seldom. This comes at the cost of only allowing one thief to steal from the same queue at ones which will slow down stealing.
+
+The non-idempotent queues are the ABP and Chase-Lev queues. They are very similar, but the key difference is that the size of ABP is fixed where as Chase-Lev can grow. This means that ABP is more memory intensive, but should perform better than Chase-Lev as it does not need to grow the queue. We have also made an implementation of Chase-Lev that also shrinks the queue which should be even more memory efficient at the cost of performance.
