@@ -3,9 +3,13 @@
 \label{sec:conclusion}
 % Goal:
 % Examine different WSQs
+We set out to examine different work-stealing queue implementations and compare their performance. To do so, we discussed and analyzed several approaches, as well as implemented them for the Java Virtual Machine. These implementation were benchmarked in order to compare their performance.
 % Expectations
+Based on the literature and our intuition we expected the Chase-Lev queues to be about as fast as the ABP queue, and the idempotent queues to be even faster.
 % Chase-Lev good
 % Idempotent fast
 % Findings
+Our results show that while the ABP queue performs well, it was out-performed by the Chase-Lev implementations, possibly due to the heavier burden placed on the garbage-collector. Interestingly, the idempotent queues did not perform as well as expected. The reason for this might be found in cases we have used for testing them. This could indicate that the performance of idempotent queues is quite case dependent.
 % ABP good
 % Idempotent meh
+\todo{Possibly final remark}
