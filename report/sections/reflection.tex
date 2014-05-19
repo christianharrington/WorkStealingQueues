@@ -44,6 +44,8 @@ processor, with each core exposing two logical cores. To our knowledge, AMD
 does not support a technology equivalent to hyper-threading. Because of this,
 some uncertainty exists as two how the machine is actually configured.
 
-\subsection{STM-based Queues}
+\subsection{Implementations with Software Transactional Memory}
 \label{sub:stm_queues}
-\todo{Write a bit about STM}
+In addition to the presented implementations, we also implemented all of the queues using ScalaSTM\,\citep{ScalaSTM}, a Scala library for implementing algorithms with software transactional memory. When we tried to benchmark these implementations, however, they all ended up in an infinite loop. We do not know whether our implementations were faulty or if the library simply did not work.
+
+As mentioned in Section~\ref{sec:background}, the philosophy behind STM is that the burden of thinking about concurrency should be shifted from the developer to the runtime system. Nevertheless, we found that the code for the queues became somewhat harder to read when implemented with STM, since we had to unfold all compare-and-swap operations into conditionals. We believe that the reason for this mostly lies in the fact that the queue implementations were not presented with STM in mind by their respective authors.
