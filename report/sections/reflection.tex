@@ -13,18 +13,18 @@ did not consider which could easily be run with the idempotent queues. This
 meant we only had two cases to test the idempotent queues with. Further, the
 two cases that happen to work with the idempotent queues are the two cases
 that involve the least work for each thread. This makes it hard for us to tell
-to which degree the performance of the idempotent queues is effected by queue
+to which degree the performance of the idempotent queues is affected by queue
 operations versus the overhead of possibly performing a piece of work multiple
 times.
 
 \subsection{Statistics For Queue Operations}
 \label{sub:statistic_for_queue_operations}
-Perhaps the greatest issue we found when analyzing our benchmarks, was the lack
+Perhaps the greatest problem we found when analyzing our benchmarks, was the lack
 of detailed metrics for the queues. For instance, it would be very useful to be
-able to measure how many unsuccessful steals occur, and how long each of these
+able to measure how many unsuccessful steals occur, how much work is duplicated, and how long each of these
 operations take. This degree of detailed information would let us reason more
 accurately about the performance characteristics of our different queues and
-cases. Unfortunately it is difficult to make these types of measurements
+cases. Unfortunately, it is difficult to make these types of measurements
 without affecting the execution of the program. If we were only working with
 single threaded workloads, the additional overhead from the logging would be
 easy to account for. But in our program, where specific interleavings of
@@ -37,12 +37,12 @@ acceptable solution within the scope of this project.
 One unexpected area where we encountered difficulties was with the processors
 on the machine used for benchmarks. For most of the project we were under the
 impression that it was a 16 core Intel Xeon processor with hyper-threading.
-Later, we found out it had two AMD Opteron processors with 16 cores each.
+Later, we found out hhat it had two AMD Opteron processors with 16 cores each.
 Strangely, the information in \texttt{/proc/cpuinfo} and the output from
 \texttt{lscpu} both implied only 8 physical cores were available on each
 processor, with each core exposing two logical cores. To our knowledge, AMD
 does not support a technology equivalent to hyper-threading. Because of this,
-some uncertainty exists as two how the machine is actually configured.
+some uncertainty exists as to how the machine is actually configured.
 
 \subsection{Implementations with Software Transactional Memory}
 \label{sub:stm_queues}
