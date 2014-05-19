@@ -4,15 +4,15 @@
 \usepackage{natbib}
 \usepackage{todonotes}
 \bibliographystyle{alpha}
-\newenvironment{changemargin}[2]{%
-\begin{list}{}{%
-\setlength{\topsep}{0pt}%
-\setlength{\leftmargin}{#1}%
-\setlength{\rightmargin}{#2}%
-\setlength{\listparindent}{\parindent}%
-\setlength{\itemindent}{\parindent}%
-\setlength{\parsep}{\parskip}%
-}%
+\newenvironment{changemargin}[2]{
+\begin{list}{}{
+\setlength{\topsep}{0pt}
+\setlength{\leftmargin}{#1}
+\setlength{\rightmargin}{#2}
+\setlength{\listparindent}{\parindent}
+\setlength{\itemindent}{\parindent}
+\setlength{\parsep}{\parskip}
+}
 \item[]}{\end{list}}
 
 \usepackage{listings}
@@ -47,7 +47,12 @@
 \maketitle
 
 \begin{abstract}
-Abstract.
+There are many solutions for scheduling work across multiple threads, one of which is the work-stealing queue. 
+In this paper we examine several implementations of work-stealing queues, such as the one described by Arora, Blumofe, and Plaxton, as well as several queues for idempotent work.
+We have implemented these queues for the Java Virtual Machine, and we benchmark them using four test cases, to be able to compare their relative performance.
+Our findings show that the simple Arora, Blumofe, and Plaxton queue is very competitive compared to later extensions.
+We also find that the idempotent queues' performance is greatly dependent on the task at hand, more so than the other implementations.
+
 \keywords{Work-stealing queues}
 \end{abstract}
 
