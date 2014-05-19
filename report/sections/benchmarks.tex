@@ -2,10 +2,10 @@
 \section{Benchmarks}
 To test our different queue implementations, we developed a small framework
 for parallelizing computations using work-stealing queues. There are three
-main components, the \texttt{WorkerPool}, \texttt{Worker}, and \texttt{Node}
+main Scala components: the \texttt{WorkerPool}, \texttt{Worker}, and \texttt{Node}
 traits. For each of the cases below, classes implementing these traits were
 created. The \texttt{WorkerPool} is in charge of starting the desired number
-of threads, and assigning each \texttt{Worker} to a thread. The \texttt{Worker}
+of threads, and assigning each \texttt{Worker} to a thread. A \texttt{Worker}
 holds a queue, and contains the main logic for the case. \texttt{Node}s
 represent individual ``work units'', and are the elements contained in the
 queues.
@@ -13,12 +13,11 @@ queues.
 \label{sec:benchmarks}
 \subsection{Cases}
 To test our different work-stealing queues, we have implemented four different
-examples.
+example cases.
 \subsubsection{Raw Queue Operations} %Raw
 
-The first, which we call ``Raw'', is meant to do as little work as possible,
-and thus to stress the queue implementations as much as possible. A
-\texttt{RawTreeBuilder} builds a tree of \texttt{Node}s, which hold an
+The first of these cases, which we call ``Raw'', is meant to do as little work as possible,
+and thus stress the queue implementations as much as possible. A tree of \texttt{Node}s is built, each of which hold an
 arbitrary number of children, and nothing else. Each \texttt{Worker} simply
 looks at a \texttt{Node}, and adds all its children to the queue, before
 moving to the next \texttt{Node}. This means that queue operations will be the
@@ -30,13 +29,15 @@ tree.
 Our second case is a simple quick sort implementation. It is simple in that it
 does not sort in-place. Instead, when splitting an array, each new child
 \texttt{Node} receives a full copy of the array to split. When a lower
-threshold for array length is reached, insertion sort is used. Once an array
+threshold for array length is reached, in-place insertion sort is used. Once an array
 has been sorted using insertion sort, its parent \texttt{Node} is notified. If
 both the parent \texttt{Node}'s children have been sorted, the parent
 \texttt{Node} is added to the queue. When the parent \texttt{Node} is examined
 by a \texttt{Worker}, the two sorted subarrays are combined, and the next
 parent \texttt{Node} in the hierarchy is notified. When both children of the
-root \texttt{Node} are combined, the entire array has been sorted. \todo{Explain why it does not work with idempotent queues}
+root \texttt{Node} are combined, the entire array has been sorted. 
+
+\todo{L\ae s}In Section~\ref{sec:implementations} we discussed different queue implementations, some of which only work with idempotent tasks. At first glance, quick sort should be idempotent as it is okay to sort a list multiple times. The problem becomes more apparent when we look at the actual implementation. Since the sorting in the leafs is done by an in-place insertion sort, if two workers sort the same list at the same time, it might cause inconsistencies. This could be solved by adding synchronization to the insertion sort, but that somewhat defeats the purpose of work-stealing queues.
 
 \subsubsection{Spanning Tree} % Spanning tree
 For our third case, we implemented the parallel spanning tree algorithm
@@ -54,22 +55,60 @@ slower.
 
 \subsubsection{XML Serialization} % XML serialization
 Our final case was inspired by Lu and Gannon's Parallel XML
-Processing~\cite{Lu:2007:PXP:1272457.1272462}. By using work-stealing queues,
-the processing of the XML document can be easily load-balanced without knowing
+Processing algorithm~\cite{Lu:2007:PXP:1272457.1272462}. By using work-stealing queues,
+the processing of an XML document can be easily load-balanced without knowing
 its structure beforehand. For this test case, we serialize a model of an XML
 document to a string. This is is done in a manner reminiscent of the quick sort
 case. When a \texttt{Node} is examined by a \texttt{Worker}, all its children
 are added to the queue. If the \texttt{Node} is a leaf, it is serialized, and
 its parent \texttt{Node} is notified. Once all the children of a \texttt{Node}
 have been serialized, the \texttt{Node} itself is serialized. The work is done
-when the root \texttt{Node} has been serialized. \todo{Explain why it does not work with idempotent queues}
+when the root \texttt{Node} has been serialized.
+
+\todo{L\ae s}As with the Quick Sort case our implementation of XML Serialization is not idempotent. This is due to how a parent \texttt{Node} knows when all its children are done serializing. A simple atomic counter keeps track of how many children are done. This which means that if a child is processed more than once the counter in the parent \texttt{Node} does not accurately represent the number of completed children. As such the parent would have no way of knowing when it itself is done. 
 
 \subsection{Results}
-Each of the four test cases were executed 50 times with random data. They were
+Each of the four test cases were executed 50 times with the same random data. They were
 tested with 8, 16, 32, and 48 threads. Due to technical difficulties, they were
 not tested with more than 48 threads. See Section~\ref{sec:testing} for an
 explanation. All benchmarks were performed on a machine running 
 Ubuntu 12.04.4, with two AMD Opteron 8386 SE 16 core processors, and 128GB of
 memory.
 
-\todo{Insert results}
+An overview of our results with 16 threads can be seen in Figure~\ref{fig:all_results}. The result of our results can be found in Appendix~. \todo{Ref til rigtig appendix}
+
+\begin{figure}
+\begin{tikzpicture}
+\begin{axis}[title={Results for 16 threads, normalized to ABP},  
+  ylabel={Relative speedup},
+  symbolic x coords={ABP, Chase-Lev, Chase-Lev (Shrinking), Idempotent (LIFO), Idempotent (FIFO),
+                     Idempotent (Double-ended), Duplicating},
+  xtick=data,
+  x tick label style={rotate=315,anchor=west},
+  legend style={at={(1.17,1)}, anchor=north,legend columns=1},
+  legend cell align=left,
+  ybar, bar width=4,
+  height=200,
+  width=300]
+\addplot coordinates {
+(ABP,1) (Chase-Lev, 1.065405) (Chase-Lev (Shrinking), 1.081225) (Idempotent (LIFO), 0)
+(Idempotent (FIFO), 0) (Idempotent (Double-ended), 0) (Duplicating, 0)
+};
+\addplot coordinates {
+(ABP,1) (Chase-Lev, 0.948556) (Chase-Lev (Shrinking), 0.949765) (Idempotent (LIFO), 0.770883)
+(Idempotent (FIFO), 1.077969) (Idempotent (Double-ended), 0.803096) (Duplicating, 0.924355)
+};
+\addplot coordinates {
+(ABP,1) (Chase-Lev, 1.411119) (Chase-Lev (Shrinking), 1.368644) (Idempotent (LIFO), 0)
+(Idempotent (FIFO), 0) (Idempotent (Double-ended), 0) (Duplicating, 0)
+};
+\addplot coordinates {
+(ABP,1) (Chase-Lev, 0.613657) (Chase-Lev (Shrinking), 0.89142) (Idempotent (LIFO), 0.184223)
+(Idempotent (FIFO), 0.314387) (Idempotent (Double-ended), 0.109937) (Duplicating, 0.594886)
+};
+\legend{Quick sort, Spanning tree, XML, Raw}
+\end{axis}
+\end{tikzpicture}
+\caption{Average of all results with 16 threads.}
+\label{fig:all_results}
+\end{figure}

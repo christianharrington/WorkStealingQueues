@@ -1,18 +1,17 @@
 %!TEX root = ../Work-stealing Queues.tex
 \section{Introduction}
 \label{sec:introduction}
-A popular way of scheduling parallel workloads across multiple threads is through use of the work-stealing queue. 
-Several different variations of the work-stealing queue exists, featuring different advantages and drawbacks.
-In this report we describe 6 different queue varieties, in order to present and overview of the different approaches available when implementing a work-stealing queue.
-We have also implemented these queues for the Java Virtual Machine (JVM), using the Scala programming language, along with several different cases that use these queues.
+A popular way of scheduling parallel workloads across multiple threads is through the use of work-stealing queues. 
+Several variations of the canonical work-stealing queue exist, featuring different advantages and drawbacks.
+In this report we describe six approaches, in order present an overview of possible strategies for implementing work-stealing queues.
+We have also implemented these queues for the Java Virtual Machine (JVM), using the Scala programming language, along with several cases that use these queues.
 This is done in order to compare the performance of the different queues in different situations. 
 
 This report is structured as follows: In Section~\ref{sec:background}, we cover
-the necessary background, covering different approaches to concurrency, as well
-as work-stealing queues themselves. In Section~\ref{sec:implementations} we
+the necessary background, including different approaches to concurrency, as well
+as work-stealing queues themselves. We
 describe the six different queues we have implemented, along with their
-differences. Section~\ref{sec:benchmarks} describes the different cases we have
-implemented, along with our benchmarking results for each case. An analysis of
+differences in Section~\ref{sec:implementations}. Section~\ref{sec:benchmarks} describes the queue implementations, along with our benchmarking results for each case. An analysis of
 these results are presented in Section~\ref{sec:performance_analysis}. Our
 testing approach is explained in Section~\ref{sec:testing}, while we reflect
 on the project in Section~\ref{sec:Reflection}. We conclude in 
