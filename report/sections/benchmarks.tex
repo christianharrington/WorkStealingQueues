@@ -36,7 +36,7 @@ both the parent \texttt{Node}'s children have been sorted, the parent
 \texttt{Node} is added to the queue. When the parent \texttt{Node} is examined
 by a \texttt{Worker}, the two sorted subarrays are combined, and the next
 parent \texttt{Node} in the hierarchy is notified. When both children of the
-root \texttt{Node} are combined, the entire array has been sorted.
+root \texttt{Node} are combined, the entire array has been sorted. \todo{Explain why it does not work with idempotent queues}
 
 \subsubsection{Spanning Tree} % Spanning tree
 For our third case, we implemented the parallel spanning tree algorithm
@@ -62,7 +62,7 @@ case. When a \texttt{Node} is examined by a \texttt{Worker}, all its children
 are added to the queue. If the \texttt{Node} is a leaf, it is serialized, and
 its parent \texttt{Node} is notified. Once all the children of a \texttt{Node}
 have been serialized, the \texttt{Node} itself is serialized. The work is done
-when the root \texttt{Node} has been serialized.
+when the root \texttt{Node} has been serialized. \todo{Explain why it does not work with idempotent queues}
 
 \subsection{Results}
 Each of the four test cases were executed 50 times with random data. They were

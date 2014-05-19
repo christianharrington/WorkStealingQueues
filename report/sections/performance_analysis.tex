@@ -1,6 +1,7 @@
 %!TEX root = ../Work-stealing Queues.tex
 \section{Performance Analysis}
 \label{sec:performance_analysis}
+\todo{Write why ABP being so good is not surprising. Write about how complicated the different queues are.}
 \subsection{Chase-Lev vs ABP}
 When comparing the performance of the Chase-Lev and ABP implementations in Figure \ref{fig:32nonidem} we see that Chase-Lev is faster at quick sort and XML serialization. On the surface it might seem odd that Chase-Lev should outperform ABP as Chase-Lev also has to maintain the circular array. However, as Chase-Lev does not have to deal with the ABA problem this better performance could be due to a lot of failed CAS operations in ABP\@. In general Chase-Lev cannot be expected to perform better then ABP\@. We can also see that Chase-Lev tends to be slower than ABP on cases with low cost tasks (Spanning-Tree and Raw) and speeds up as tasks become more work intensive. If more time is needed by each task the relative time spend on queue operation lowers and thus the increased overhead of Chase-Lev has less of an effect on the overall performance.
 

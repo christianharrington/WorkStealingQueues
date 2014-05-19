@@ -1,6 +1,7 @@
 %!TEX root = ../Work-stealing Queues.tex
 \section{Implementations}
 \label{sec:implementations}
+\todo{More code examples}
 In the following section we will describe the work-stealing queues we have implemented. Upon each queue three operations can be made, two of which are classic queue operations. The \texttt{push} operation simply adds a task to the queue and \texttt{take} removes a task from the queue. These operations are only meant to be used by the owner of the queue. The third operation, \texttt{steal}, allows threads to ``steal'' work from other threads. While the \texttt{steal} and \texttt{take} operations have similar effects, they have to work differently to ensure the consistency of the queue.
 
 \subsection{Arora-Blumofe-Plaxton (ABP) Queue}
@@ -55,8 +56,8 @@ Similar to the idempotent queues the duplicating queue\,\cite[p. 233]{Leijen:200
 Furthermore, if a new element is pushed just after the above duplication, the \texttt{head} and \texttt{tail} pointers are inconsistent\,\cite[p. 235]{Leijen:2009:DTP:1639949.1640106}. This is solved by another pointer \texttt{tailMin} indicating the minimal index at which a task has been taken. When checking if the queue is empty when taking, \texttt{head} is compared to the smallest value of \texttt{tailMin} and \texttt{tail}.
 
 \subsection{Comparison}
-Our implementations can be split into two categories: Those that are idempotent, and those that are not. The idea behind the idempotent queues is that the queue operations themselves are simpler, but at the risk of performing the same task multiple times. This means that we can expect the idempotent queues to perform well in cases where there are many queue operations. They will, however, not work in cases where the same work is not allowed to be done twice. For us this means that the queues that are idempotent cannot be tested on our quick sort and XML serialization cases.
+Our implementations can be split into two categories: Those that are idempotent, and those that are not. The idea behind the idempotent queues is that the queue operations themselves are simpler, but at the risk of performing the same task multiple times. This means that we can expect the idempotent queues to perform well in cases where there are many queue operations. They will, however, not work in cases where the same work is not allowed to be done twice.\todo{Write a bit more?}
 
-Amongst the idempotent queues the duplicating queue stands out. Since it is only idempotent when the owner and exactly one thief attempts to access a queue with exactly one element, duplication of work is a lot more seldom. This comes at the cost of only allowing one thief to steal from the same queue at ones which will slow down stealing.
+Amongst the idempotent queues the duplicating queue stands out. Since it is only idempotent when the owner and exactly one thief attempts to access a queue with exactly one element, duplication of work is a lot more seldom. This comes at the cost of only allowing one thief to steal from the same queue at once which will slow down stealing.
 
 The non-idempotent queues are the ABP and Chase-Lev queues. They are very similar, but the key difference is that the size of ABP is fixed where as Chase-Lev can grow. This means that ABP is more memory intensive, but should perform better than Chase-Lev as it does not need to grow the queue. We have also made an implementation of Chase-Lev that also shrinks the queue which should be even more memory efficient at the cost of performance.

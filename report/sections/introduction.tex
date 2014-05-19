@@ -1,15 +1,11 @@
 %!TEX root = ../Work-stealing Queues.tex
 \section{Introduction}
 \label{sec:introduction}
-A popular way of scheduling parallel workloads across multiple threads is
-through use of the work-stealing queue. Several different variations of the
-work-stealing queue exists, featuring different advantages and drawbacks. In
-this report we describe 6 different queue varieties, in order to present an
-overview of the different approaches available when implementing a
-work-stealing queue. We have also implemented these queues in the Scala
-programming language, along with several different cases that use them. This is
-done in order to compare the performance of the different queues in different
-situations. 
+A popular way of scheduling parallel workloads across multiple threads is through use of the work-stealing queue. 
+Several different variations of the work-stealing queue exists, featuring different advantages and drawbacks.
+In this report we describe 6 different queue varieties, in order to present and overview of the different approaches available when implementing a work-stealing queue.
+We have also implemented these queues for the Java Virtual Machine (JVM), using the Scala programming language, along with several different cases that use these queues.
+This is done in order to compare the performance of the different queues in different situations. 
 
 This report is structured as follows: In Section~\ref{sec:background}, we cover
 the necessary background, covering different approaches to concurrency, as well
