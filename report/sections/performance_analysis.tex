@@ -2,9 +2,8 @@
 \section{Performance Analysis}
 This section analyses the results of our benchmarks. We focus on some interesting observations, and discuss the cause behind the results we are seeing.
 \label{sec:performance_analysis}
-\todo{Write why ABP being so good is not surprising. Write about how complicated the different queues are.}
 \subsection{Chase-Lev vs. ABP}
-When comparing the performance of the Chase-Lev and ABP implementations in Figure \ref{fig:32nonidem}, we see that Chase-Lev is faster at quick sort and XML serialization. On the surface it might seem odd that Chase-Lev should outperform ABP as Chase-Lev also has to maintain the circular array. However, as Chase-Lev does not have to deal with the ABA problem this better performance could be due to a lot of failed CAS operations in ABP\@. In general, Chase-Lev therefore cannot be expected to perform better than ABP\@. We can also see that Chase-Lev tends to be slower than ABP on cases with low cost tasks (Spanning tree and Raw) and speeds up as tasks become more work intensive. If more time is needed for each task, the relative time spend on queue operations lowers and thus the increased overhead of Chase-Lev has less of an effect on the overall performance.
+When comparing the performance of the Chase-Lev and ABP implementations in Figure~\ref{fig:32nonidem}, we see that Chase-Lev is faster at quick sort and XML serialization. On the surface it might seem odd that Chase-Lev should outperform ABP as Chase-Lev also has to maintain the circular array. However, as Chase-Lev does not have to deal with the ABA problem this better performance could be due to a lot of failed CAS operations in ABP\@. In general, Chase-Lev therefore cannot be expected to perform better than ABP\@. We can also see that Chase-Lev tends to be slower than ABP on cases with low cost tasks (Spanning tree and Raw) and speeds up as tasks become more work intensive. If more time is needed for each task, the relative time spend on queue operations lowers and thus the increased overhead of Chase-Lev has less of an effect on the overall performance.
 
 \begin{figure}
 \begin{tikzpicture}
@@ -69,7 +68,7 @@ CAS operations can incur significant overhead when dealing with multiple cores n
 \end{figure}
 
 \subsection{Performance of Idempotent Queues}
-Looking at Figure \ref{fig:idemraw}, the idempotent queues are very slow in the Raw case. At first this does not seem right, as one of the advantages of the idempotent queues should be faster queue operations, which is exactly what Raw tests. The reason for this bad performance can be that there is no synchronization of information on what work is done and what needs to be done. If two threads receive the same task from a queue, they both spawn the children of that task, which will both be added to their respective queues. This means that if two workers perform the same task, not only the task itself has to be executed twice, but also all the children of that task.
+Looking at Figure~\ref{fig:idemraw}, the idempotent queues are very slow in the Raw case. At first this does not seem right, as one of the advantages of the idempotent queues should be faster queue operations, which is exactly what Raw tests. The reason for this bad performance can be that there is no synchronization of information on what work is done and what needs to be done. If two threads receive the same task from a queue, they both spawn the children of that task, which will both be added to their respective queues. This means that if two workers perform the same task, not only the task itself has to be executed twice, but also all the children of that task.
 
 \begin{figure}
 \begin{tikzpicture}
