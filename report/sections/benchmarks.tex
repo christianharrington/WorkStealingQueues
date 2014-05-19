@@ -37,7 +37,7 @@ by a \texttt{Worker}, the two sorted subarrays are combined, and the next
 parent \texttt{Node} in the hierarchy is notified. When both children of the
 root \texttt{Node} are combined, the entire array has been sorted. 
 
-\todo{L\ae s}In Section~\ref{sec:implementations} we discussed different queue implementations, some of which only work with idempotent tasks. At first glance, quick sort should be idempotent as it is okay to sort a list multiple times. The problem becomes more apparent when we look at the actual implementation. Since the sorting in the leafs is done by an in-place insertion sort, if two workers sort the same list at the same time, it might cause inconsistencies. This could be solved by adding synchronization to the insertion sort, but that somewhat defeats the purpose of work-stealing queues.
+\todo{L\ae s}In Section~\ref{sec:implementations} we discussed different queue implementations, some of which only work with idempotent tasks. At first glance, quick sort should be an idempotent problem as it is okay to sort a list multiple times. The problem becomes apparent when we look at the actual implementation. Since the sorting in the leafs is done by an in-place insertion sort, if two workers sort the same list at the same time, it might cause inconsistencies. This could be solved by adding synchronization to the insertion sort, but that somewhat defeats the purpose of work-stealing queues.
 
 \subsubsection{Spanning Tree} % Spanning tree
 For our third case, we implemented the parallel spanning tree algorithm
@@ -65,7 +65,7 @@ its parent \texttt{Node} is notified. Once all the children of a \texttt{Node}
 have been serialized, the \texttt{Node} itself is serialized. The work is done
 when the root \texttt{Node} has been serialized.
 
-\todo{L\ae s}As with the Quick Sort case our implementation of XML Serialization is not idempotent. This is due to how a parent \texttt{Node} knows when all its children are done serializing. A simple atomic counter keeps track of how many children are done. This which means that if a child is processed more than once the counter in the parent \texttt{Node} does not accurately represent the number of completed children. As such the parent would have no way of knowing when it itself is done. 
+\todo{L\ae s}As with the Quick Sort case, our implementation of XML Serialization is not idempotent. This is due to how a parent \texttt{Node} knows when all its children are done serializing. An atomic counter keeps track of how many children are done. This which means that if a child is processed more than once the counter in the parent \texttt{Node} does not accurately represent the number of completed children. As such the parent would have no way of knowing when it itself is done.
 
 \subsection{Results}
 Each of the four test cases were executed 50 times with the same random data. They were
@@ -75,7 +75,7 @@ explanation. All benchmarks were performed on a machine running
 Ubuntu 12.04.4, with two AMD Opteron 8386 SE 16 core processors, and 128GB of
 memory.
 
-An overview of our results with 16 threads can be seen in Figure~\ref{fig:all_results}. The result of our results can be found in Appendix~. \todo{Ref til rigtig appendix}
+An overview of our results with 16 threads can be seen in Figure~\ref{fig:all_results}. The rest of our results can be found in Appendix~. \todo{Ref til appendix}
 
 \begin{figure}
 \begin{tikzpicture}
