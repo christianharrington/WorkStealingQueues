@@ -42,7 +42,7 @@ We have also made a shrinking version of Chase-Lev which has yielded some intere
 
 \subsection{Quick Sort and XML Serialization Scaling}
 As can be seen from Figure~\ref{fig:qsscaling}, the Quick Sort case does not scale well past 16 threads. The XML Serialization case also scales poorly past 16 cores (see Appendix~\ref{app:results}). While we have not been able to pinpoint the exact cause of this, we believe it to be caused by the two CPUs of the test system.
-CAS operations can incur significant overhead when dealing with multiple cores not on the same die\,\cite[p. 19--20]{Dice06whatreally}, but this should affect all our use cases equally. One of the things that sets the Quick Sort and XML Serialization apart from the other cases is that they are much more memory intensive. Keeping all this data synchronized between the two CPUs might be the cause of the slowdown past 16 cores.
+CAS operations can incur significant overhead when dealing with multiple cores not on the same die\,\cite[p. 19--20]{McKenney2008ParallelProgramming}, but this should affect all our use cases equally. One of the things that sets the Quick Sort and XML Serialization apart from the other cases is that they are much more memory intensive. Keeping all this data synchronized between the two CPUs might be the cause of the slowdown past 16 cores.
 
 \begin{figure}
 \begin{tikzpicture}
