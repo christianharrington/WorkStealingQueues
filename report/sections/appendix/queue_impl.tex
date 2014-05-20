@@ -1,0 +1,501 @@
+%!TEX root = ../../Work-stealing Queues.tex
+\section{Queue Implementations}
+\label{app:queue_impl}
+\subsection{ABP Queue}
+\begin{lstlisting}[language=scala,basicstyle=\ttfamily\bfseries\scriptsize,numbers=left]
+package dk.itu.wsq.queue
+
+import java.util.concurrent.atomic._
+
+case class Tag(val value: Int) extends AnyVal
+
+class ABPQueue[E](val size: Int) extends WorkStealingQueue[E] {
+  case class Age(val tag: Tag, val top: Int) {
+    override def equals(that: Any) = that match {
+      case t: Age => tag == t.tag && top == t.top
+      case _      => false
+    }
+  }
+
+  private val age = new AtomicReference[Age](Age(Tag(0), 0))
+  private var bottom: Int = 0
+  private val queue = new AtomicReferenceArray[E](size)
+
+  final def push(v: E): Unit = {
+    val localBot = bottom
+    queue.set(localBot, v)
+    bottom = localBot + 1
+  }
+
+  final def take(): Option[E] = {
+    val oldBottom = bottom
+
+    if (oldBottom == 0) {
+      None
+    }
+    else {
+      val localBot = oldBottom - 1
+      bottom = localBot
+
+      val v = queue.get(localBot)
+      val oldAge = age.get
+      
+      if (localBot > oldAge.top) {
+        Some(v)
+      }
+      else {
+        bottom = 0
+        val newAge = new Age(Tag(oldAge.tag.value + 1), 0)
+        if (localBot == oldAge.top) {
+          if (age.compareAndSet(oldAge, newAge)) {
+            Some(v)
+          }
+          else {
+            age.set(newAge)
+            None
+          }
+        }
+        else {
+          age.set(newAge)
+          None
+        }
+      }
+    }
+  }
+
+  final def steal(): Option[E] = {
+    val oldAge = age.get
+    val localBot = bottom
+
+    if (localBot <= oldAge.top) {
+      None
+    }
+    else {
+      val v = queue.get(oldAge.top)
+      val newAge = Age(oldAge.tag, oldAge.top + 1)
+
+      if (age.compareAndSet(oldAge, newAge)) {
+        Some(v)
+      }
+      else {
+        None
+      }
+    }
+  }
+
+  final def length = bottom - age.get.top
+}
+\end{lstlisting}
+
+\subsection{Chase-Lev Queue (Both Versions)}
+\begin{lstlisting}[language=scala,basicstyle=\ttfamily\bfseries\scriptsize,numbers=left]
+package dk.itu.wsq.queue
+
+class CircularArray[E: Manifest](val logSize: Int) {
+  // Initial size = 2^logSize
+  private val segment: Array[E] = new Array[E](1 << logSize)
+
+  def size: Long = 1 << logSize
+
+  def apply(index: Long): E = get(index)
+
+  def update(index: Long, element: E) = put(index, element)
+
+  def get(index: Long): E = {
+    segment((index % size).toInt)
+    // TODO: Improve this by using a bit mask
+  }
+
+  def put(index: Long, element: E): Unit = {
+    segment((index % size).toInt) = element
+    // TODO: Improve this by using a bit mask
+  }
+
+  def grow(bottom: Long, top: Long): CircularArray[E] = {
+    val newArray = new CircularArray(logSize + 1)
+    var i = top
+    for (i <- top until bottom) {
+      newArray(i) = get(i)
+    }
+
+    newArray
+  }
+
+  def shrinkNaive(bottom: Long, top: Long): CircularArray[E] = {
+    val newArray = new CircularArray(logSize - 1)
+    var i = top
+    for (i <- top until bottom) {
+      newArray(i) = get(i)
+    }
+
+    newArray    
+  }
+  
+}
+
+class ChaseLevQueue[E: Manifest] extends WorkStealingQueue[E] {
+  import java.util.concurrent.atomic._
+  
+  // Never decremented. Assumed to never overflow.
+  protected var top: AtomicLong = new AtomicLong(0)
+  // Indicates where next element is pushed
+  @volatile protected var bottom: Long = 0
+  
+  // Initial size is 2^logInitialSize
+  protected val logInitialSize = 2
+  @volatile protected var activeArray = new CircularArray[E](logInitialSize)
+
+  final def push(element: E): Unit = {
+    val b = bottom
+    val t = top.get
+    var arr = activeArray
+    val size = b - t
+    // If the array is too small, grow the array
+    if (size >= arr.size - 1) {
+      arr = arr.grow(b, t)
+      activeArray = arr
+    }
+
+    arr(b) = element
+    bottom = b + 1
+  }
+
+  final def steal(): Option[E] = {
+    val t = top.get
+    val b = bottom
+    val arr = activeArray
+    val size = b - t
+
+    if (size <= 0) {
+      None
+    } else {
+      val elem = arr(t) // Get top element
+
+      if (top.compareAndSet(t, t + 1)) 
+        Some(elem)
+      else 
+        None
+    }
+  }
+
+  def take(): Option[E] = {
+    var b = bottom
+    val arr = activeArray
+    b = b - 1
+    bottom = b
+    val t = top.get
+    val size = b - t
+
+    if (size < 0) {
+      bottom = t
+      None
+    } else {
+      val elem = arr(b) // Get bottom element
+
+      if (size > 0) {
+        Some(elem)
+      } else {
+        bottom = t + 1
+        if (top.compareAndSet(t, t + 1)) 
+          Some(elem) 
+        else
+          None
+      }
+    }
+  }
+
+  final def length = (bottom - top.get).toInt
+}
+\end{lstlisting}
+
+\subsection{Idempotent LIFO Queue}
+\begin{lstlisting}[language=scala,basicstyle=\ttfamily\bfseries\scriptsize,numbers=left]
+package dk.itu.wsq.queue
+
+class IdempotentLIFO[E: Manifest] extends WorkStealingQueue[E] {
+  import java.util.concurrent.atomic._
+  import scala.annotation.tailrec
+
+  case class Anchor(tail: Int, tag: Int)
+
+  private val anchor: AtomicReference[Anchor] = 
+  		new AtomicReference[Anchor](Anchor(0, 0)) // (tail, tag)
+  private var capacity: Int = 1
+  private var tasks: Array[E] = new Array[E](capacity)
+
+  @tailrec
+	final def push(e: E): Unit = {    
+    val localAnchor = anchor.get()
+
+    if(localAnchor.tail == capacity) {
+      // Capacity limit reached, expand and try again
+      expand() 
+      push(e)
+    } else {
+      // Else put the element and write to anchor with read values plus one
+      tasks(localAnchor.tail) = e
+      anchor.set(Anchor(localAnchor.tail + 1, localAnchor.tag + 1))
+    }
+  }
+
+	final def take(): Option[E] = {    
+    val localAnchor = anchor.get()
+
+    if(localAnchor.tail == 0) {
+      None
+    } else {
+      val task = tasks(localAnchor.tail - 1)
+      anchor.set(Anchor(localAnchor.tail - 1, localAnchor.tag))
+      Some(task)
+    }
+  }
+
+  @tailrec
+  final def steal(): Option[E] = {
+    val localAnchor = anchor.get()
+    if(localAnchor.tail == 0) {
+      None
+    } else {
+      val arr = tasks
+      val task = arr(localAnchor.tail - 1)
+      if(anchor.compareAndSet(localAnchor, Anchor(localAnchor.tail - 1, localAnchor.tag))) {
+        Some(task)
+      }
+      else {
+        steal()
+      }
+    }
+  }
+
+  final private def expand(): Unit = {
+    val newCapacity = capacity * 2
+    val arr = new Array[E](newCapacity)
+
+    for(i <- 0 until capacity) { arr(i) = tasks(i) }
+
+    tasks = arr
+    capacity = newCapacity
+  }
+
+  final def length: Int = anchor.get().tail
+}
+\end{lstlisting}
+
+\subsection{Idempotent FIFO Queue}
+\begin{lstlisting}[language=scala,basicstyle=\ttfamily\bfseries\scriptsize,numbers=left]
+package dk.itu.wsq.queue
+
+class IdempotentFIFO[E: Manifest] extends WorkStealingQueue[E] {
+  import java.util.concurrent.atomic._
+  import scala.annotation.tailrec
+
+  private val head: AtomicInteger = new AtomicInteger(0)
+  private var tail: Int = 0
+  private var tasks: Array[E] = new Array[E](1)
+
+  @tailrec
+	final def push(e: E): Unit = {
+    val h = head.get()
+    val t = tail
+    if(t >= h + tasks.length) {
+      expand()
+      push(e)
+    } else {
+      tasks(t % tasks.length) = e
+      tail = t + 1 
+    }
+  }
+
+	final def take(): Option[E] = {
+    val h = head.get()
+    val t = tail
+    if(h == t) {
+      None
+    } else {
+      val task = tasks(h % tasks.length)
+      head.set(h + 1)
+      Some(task)
+    }
+  }
+
+  @tailrec
+  final def steal(): Option[E] = {
+    //println("Stealing...")
+    val h = head.get()
+    val t = tail
+    if(h == t) {
+      None
+    } else {
+      val arr = tasks
+      val task = arr(h % arr.length)
+      if(head.compareAndSet(h, h + 1)) {
+        Some(task)
+      }
+      else {
+        steal()
+      }
+    }
+  }
+
+  private final def expand(): Unit = {
+    val size = tasks.length
+    val arr = new Array[E](size * 2)
+    for (i <- head.get() until tail) {
+      arr(i % arr.length) = tasks(i % tasks.length)
+    }
+    tasks = arr
+  }
+
+  final def length: Int = tail - head.get()
+}
+
+\end{lstlisting}
+
+\subsection{Idempotent Double-Ended Queue}
+\begin{lstlisting}[language=scala,basicstyle=\ttfamily\bfseries\scriptsize,numbers=left]
+package dk.itu.wsq.queue
+
+class IdempotentDE[E: Manifest] extends WorkStealingQueue[E] {
+  import java.util.concurrent.atomic._
+  import scala.annotation.tailrec
+
+  case class Anchor(head: Int, size: Int, tag: Int)
+
+  @volatile private var tasks: Array[E] = new Array[E](1)
+
+  @volatile private var anchor: AtomicReference[Anchor] = 
+    new AtomicReference[Anchor](Anchor(0, 0, 0)) // (head, size, tag)
+
+  @tailrec
+  final def push(e: E): Unit = {
+    val localAnchor = anchor.get()
+    if (localAnchor.size == tasks.length) {
+      expand()
+      push(e)
+    } else {
+      tasks((localAnchor.head + localAnchor.size) % tasks.length) = e
+      anchor.set(Anchor(localAnchor.head, localAnchor.size + 1, localAnchor.tag + 1))
+    }
+  }
+
+  final def take(): Option[E] = {
+    val localAnchor = anchor.get()
+    if (localAnchor.size == 0) {
+      None
+    } else {
+      val task = tasks((localAnchor.head + localAnchor.size - 1) % tasks.length)
+      anchor.set(Anchor(localAnchor.head, localAnchor.size - 1, localAnchor.tag))
+      Some(task)
+    }
+  }
+
+  @tailrec
+  final def steal(): Option[E] = {
+    val localAnchor = anchor.get()
+    if (localAnchor.size == 0) {
+      None
+    } else {
+      val arr = tasks.clone()
+      val task = arr(localAnchor.head % arr.length)
+      if (anchor.compareAndSet(
+      	localAnchor, Anchor(localAnchor.head + 1, localAnchor.size - 1, localAnchor.tag)
+      	)) {
+        Some(task)
+      }
+      else {
+        steal()
+      }
+    }
+  }
+
+  final def expand(): Unit = {
+    val localAnchor = anchor.get()
+    val arr = new Array[E](localAnchor.size * 2)
+    for (i <- 0 until localAnchor.size) {
+      arr((localAnchor.head + i) % arr.length) = tasks((localAnchor.head + i) % tasks.length)
+    }
+    tasks = arr
+  }
+
+  final def length: Int = anchor.get().size
+}
+
+\end{lstlisting}
+
+\subsection{Duplicating Queue}
+\begin{lstlisting}[language=scala,basicstyle=\ttfamily\bfseries\scriptsize,numbers=left]
+package dk.itu.wsq.queue
+
+class DuplicatingQueue[E: Manifest](val size: Int) extends WorkStealingQueue[E] {
+  import scala.annotation.tailrec
+
+  private val tasks: Array[Option[E]] = new Array[Option[E]](size)
+  @volatile private var head: Int = 0
+  @volatile private var tail: Int = 0
+  private var tailMin = Integer.MAX_VALUE
+
+  @tailrec
+  final def push(e: E): Unit = {
+    if(tail < (Math.min(tailMin, head) + size) && tail < Integer.MAX_VALUE/2) {
+      tasks(tail % size) = Some(e)
+      tail += 1
+    } else {
+      this.synchronized {
+        if(head > tailMin) {
+          head = tailMin
+        }
+        tailMin = Integer.MAX_VALUE
+
+        val count = Math.max(0, tail - head)
+
+        head = head % size
+        tail = tail + count
+      }
+      push(e) // In the paper they run the task here.
+    }
+  }
+
+  final def take(): Option[E] = {
+    tail -= 1
+    if(head <= Math.min(tailMin, tail)) {
+      if(tailMin > tail) {
+        tailMin = tail
+      }      
+      val task = tasks(tail % size)
+      tasks(tail % size) = None
+      task
+    } else {
+      this.synchronized {
+        if(head > tailMin) {
+          head = tailMin
+        }
+        tailMin = Integer.MAX_VALUE
+        if(head <= tail) {
+          val task = tasks(tail % size)
+          tasks(tail % size) = None
+          task
+        } else {
+          tail += 1
+          None
+        }
+      } 
+    }
+  }
+
+  final def steal(): Option[E] = {
+    this.synchronized {
+      if(head < tail) {
+        val task = tasks(head % size)
+        head += 1
+        task
+      } else {
+        None
+      }
+    }
+  }
+
+  final def length: Int = tail - head
+}
+
+\end{lstlisting}
+
